@@ -24,28 +24,31 @@ public class FilmService {
         validateReleaseDate(film);
         film.setId(nextId);
         films.put(nextId, film);
-        log.info("Film added: id={}, name={}", film.getId(), film.getName());
+        log.info("Film added: id={}", film.getId());
         nextId++;
         return film;
     }
 
     public Film updateFilm(Film film) {
         if (!films.containsKey(film.getId())) {
-            throw new NotFoundException("Film not found");
+            log.warn("Film not found for update: id={}", film.getId());
+            throw new NotFoundException("Film with id: " + film.getId() + "not found");
         }
         validateReleaseDate(film);
         films.put(film.getId(), film);
-        log.info("Film updated: id={}, name={}", film.getId(), film.getName());
+        log.info("Film updated: id={}", film.getId());
 
         return film;
     }
 
     public Collection<Film> getAllFilms() {
+        log.info("Get all films request");
         return films.values();
     }
 
     private void validateReleaseDate(Film film) {
         if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
+            log.warn("Validation failed: id={}", film.getId());
             throw new ValidationException("Release date is before " + MIN_RELEASE_DATE);
         }
     }
