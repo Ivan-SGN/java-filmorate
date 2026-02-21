@@ -58,6 +58,7 @@ public class FilmService {
 
     public void removeLike(int filmId, int userId) {
         Film film = filmStorage.getFilm(filmId);
+        userStorage.getUser(userId);
         film.getLikes().remove(userId);
         log.info("User {} removed like from film {}", userId, filmId);
     }
