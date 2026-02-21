@@ -54,6 +54,7 @@ class FilmServiceTest {
                 () -> filmService.addFilm(film)
         );
     }
+
     @Test
     void testAddLikeAndGetPopularFilms() {
         InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
@@ -68,7 +69,7 @@ class FilmServiceTest {
         List<Film> popular = filmService.getPopular(10);
 
         assertEquals(2, popular.size());
-        assertEquals(film1.getId(), popular.get(0).getId());
+        assertEquals(film1.getId(), popular.getFirst().getId());
     }
 
     @Test

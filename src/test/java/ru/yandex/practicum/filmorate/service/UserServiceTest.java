@@ -98,7 +98,7 @@ class UserServiceTest {
         List<User> commonFriends = userService.getCommonFriends(user1.getId(), user2.getId());
 
         assertEquals(1, commonFriends.size());
-        assertEquals(common.getId(), commonFriends.get(0).getId());
+        assertEquals(common.getId(), commonFriends.getFirst().getId());
     }
 
     @Test
