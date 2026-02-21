@@ -13,6 +13,15 @@ import java.util.List;
 @RestControllerAdvice
 public class ErrorHandler {
 
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleAllExceptions(Exception e) {
+        log.error("Unexpected error", e);
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Internal server error");
+        return response;
+    }
+
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleFilmDateValidation(ValidationException e) {
