@@ -95,8 +95,8 @@ public class UserService {
                 .toList();
     }
 
-    private void validateFriend(int userId, int friendId){
-        if (userId == friendId){
+    private void validateFriend(int userId, int friendId) {
+        if (userId == friendId) {
             log.warn("Friend validation failed: same ids {}", friendId);
             throw new ValidationException("Invalid friend id");
         }
