@@ -20,12 +20,8 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUser(int id) {
-        User user = users.get(id);
-        if (user == null) {
-            throw new NotFoundException("User not found");
-        }
-        return user;
+    public Optional<User> getUser(int id) {
+        return Optional.ofNullable(users.get(id));
     }
 
     @Override
@@ -35,10 +31,8 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        if (!users.containsKey(user.getId())) {
-            throw new NotFoundException("User not found");
-        }
         users.put(user.getId(), user);
-        return user;
+        return users.get(user.getId());
     }
 }
+

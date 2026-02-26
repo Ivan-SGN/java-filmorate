@@ -20,12 +20,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilm(int id) {
-        Film film = films.get(id);
-        if (film == null) {
-            throw new NotFoundException("Film not found");
-        }
-        return film;
+    public Optional<Film> getFilm(int id) {
+        return Optional.ofNullable(films.get(id));
     }
 
     @Override
@@ -35,10 +31,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film updateFilm(Film film) {
-        if (!films.containsKey(film.getId())) {
-            throw new NotFoundException("Film not found");
-        }
         films.put(film.getId(), film);
-        return film;
+        return films.get(film.getId());
     }
 }

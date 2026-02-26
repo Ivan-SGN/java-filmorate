@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -10,6 +11,7 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -33,6 +35,8 @@ public class FilmService {
     }
 
     public Film updateFilm(Film film) {
+        filmStorage.getFilm(film.getId())
+                .orElseThrow(() -> new NotFoundException("Film not found"));
         validateReleaseDate(film);
         Film updatedFilm = filmStorage.updateFilm(film);
         log.info("Film updated: id={}", updatedFilm.getId());
@@ -46,19 +50,24 @@ public class FilmService {
 
     public Film getFilm(int id) {
         log.info("Get film request, id: {}", id);
-        return filmStorage.getFilm(id);
+        return filmStorage.getFilm(id)
+                .orElseThrow(() -> new NotFoundException("Film not found"));
     }
 
     public void addLike(int filmId, int userId) {
-        Film film = filmStorage.getFilm(filmId);
-        userStorage.getUser(userId);
+        Film film = filmStorage.getFilm(filmId)
+                .orElseThrow(() -> new NotFoundException("Film not found"));
+        userStorage.getUser(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
         film.getLikes().add(userId);
         log.info("User {} liked film {}", userId, filmId);
     }
 
     public void removeLike(int filmId, int userId) {
-        Film film = filmStorage.getFilm(filmId);
-        userStorage.getUser(userId);
+        Film film = filmStorage.getFilm(filmId)
+                .orElseThrow(() -> new NotFoundException("Film not found"));
+        userStorage.getUser(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
         film.getLikes().remove(userId);
         log.info("User {} removed like from film {}", userId, filmId);
     }
