@@ -37,7 +37,7 @@ public class FilmService {
         getFilmOrThrow(film.getId());
         validateReleaseDate(film);
         Film updatedFilm = filmStorage.updateFilm(film)
-                .orElseThrow(() -> new IllegalStateException("Error during update user"));
+                .orElseThrow(() -> new IllegalStateException("Error during update film"));
         log.info("Film updated: id={}", updatedFilm.getId());
         return updatedFilm;
     }

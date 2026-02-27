@@ -34,8 +34,8 @@ public class UserService {
         getUserOrThrow(user.getId());
         validateLogin(user);
         normalizeName(user);
-        User updatedUser = userStorage.updateUser(user).
-                orElseThrow(() -> new IllegalStateException("Error during update user"));
+        User updatedUser = userStorage.updateUser(user)
+                .orElseThrow(() -> new IllegalStateException("Error during update user"));
         log.info("User updated: id={}", updatedUser.getId());
         return updatedUser;
     }
