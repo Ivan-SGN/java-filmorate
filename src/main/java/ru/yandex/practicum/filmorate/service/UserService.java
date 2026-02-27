@@ -31,11 +31,11 @@ public class UserService {
 
     public User updateUser(User user) {
         log.info("Update user request: id={}", user.getId());
-        userStorage.getUser(user.getId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        getUserOrThrow(user.getId());
         validateLogin(user);
         normalizeName(user);
-        User updatedUser = userStorage.updateUser(user);
+        User updatedUser = userStorage.updateUser(user).
+                orElseThrow(() -> new IllegalStateException("Error during update user"));
         log.info("User updated: id={}", updatedUser.getId());
         return updatedUser;
     }
@@ -47,16 +47,13 @@ public class UserService {
 
     public User getUser(int id) {
         log.info("Get user request, id: {}", id);
-        return userStorage.getUser(id)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        return getUserOrThrow(id);
     }
 
     public void addFriend(int userId, int friendId) {
         validateFriend(userId, friendId);
-        User user = userStorage.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-        User friend = userStorage.getUser(friendId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = getUserOrThrow(userId);
+        User friend = getUserOrThrow(friendId);
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
         log.info("Users {} and {} are now friends", userId, friendId);
@@ -64,35 +61,36 @@ public class UserService {
 
     public void removeFriend(int userId, int friendId) {
         validateFriend(userId, friendId);
-        User user = userStorage.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-        User friend = userStorage.getUser(friendId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = getUserOrThrow(userId);
+        User friend = getUserOrThrow(friendId);
         user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
         log.info("Users {} and {} are no longer friends", userId, friendId);
     }
 
     public List<User> getFriends(int userId) {
-        User user = userStorage.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = getUserOrThrow(userId);
         return user.getFriends().stream()
-                .map(id -> userStorage.getUser(id)
-                        .orElseThrow(() -> new NotFoundException("User not found")))
+                .map(this::getUserOrThrow)
                 .toList();
     }
 
     public List<User> getCommonFriends(int userId, int friendId) {
         validateFriend(userId, friendId);
-        User user = userStorage.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-        User other = userStorage.getUser(friendId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = getUserOrThrow(userId);
+        User other = getUserOrThrow(friendId);
         return user.getFriends().stream()
                 .filter(id -> other.getFriends().contains(id))
-                .map(id -> userStorage.getUser(id)
-                        .orElseThrow(() -> new NotFoundException("User not found")))
+                .map(this::getUserOrThrow)
                 .toList();
+    }
+
+    private User getUserOrThrow(int id) {
+        return userStorage.getUser(id)
+                .orElseThrow(() -> {
+                    log.warn("User not found, id={}", id);
+                    return new NotFoundException("User not found");
+                });
     }
 
     private void validateFriend(int userId, int friendId) {

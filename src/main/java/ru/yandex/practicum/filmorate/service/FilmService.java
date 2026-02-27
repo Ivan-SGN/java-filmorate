@@ -34,10 +34,10 @@ public class FilmService {
     }
 
     public Film updateFilm(Film film) {
-        filmStorage.getFilm(film.getId())
-                .orElseThrow(() -> new NotFoundException("Film not found"));
+        getFilmOrThrow(film.getId());
         validateReleaseDate(film);
-        Film updatedFilm = filmStorage.updateFilm(film);
+        Film updatedFilm = filmStorage.updateFilm(film)
+                .orElseThrow(() -> new IllegalStateException("Error during update user"));
         log.info("Film updated: id={}", updatedFilm.getId());
         return updatedFilm;
     }
@@ -49,26 +49,37 @@ public class FilmService {
 
     public Film getFilm(int id) {
         log.info("Get film request, id: {}", id);
-        return filmStorage.getFilm(id)
-                .orElseThrow(() -> new NotFoundException("Film not found"));
+        return getFilmOrThrow(id);
     }
 
     public void addLike(int filmId, int userId) {
-        Film film = filmStorage.getFilm(filmId)
-                .orElseThrow(() -> new NotFoundException("Film not found"));
-        userStorage.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        Film film = getFilmOrThrow(filmId);
+        getUserOrThrow(userId);
         film.getLikes().add(userId);
         log.info("User {} liked film {}", userId, filmId);
     }
 
     public void removeLike(int filmId, int userId) {
-        Film film = filmStorage.getFilm(filmId)
-                .orElseThrow(() -> new NotFoundException("Film not found"));
-        userStorage.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        Film film = getFilmOrThrow(filmId);
+        getUserOrThrow(userId);
         film.getLikes().remove(userId);
         log.info("User {} removed like from film {}", userId, filmId);
+    }
+
+    private Film getFilmOrThrow(int id) {
+        return filmStorage.getFilm(id)
+                .orElseThrow(() -> {
+                    log.warn("Film not found, id={}", id);
+                    return new NotFoundException("Film not found");
+                });
+    }
+
+    private void getUserOrThrow(int id) {
+        userStorage.getUser(id)
+                .orElseThrow(() -> {
+                    log.warn("User not found, id={}", id);
+                    return new NotFoundException("User not found");
+                });
     }
 
     public List<Film> getPopular(int count) {

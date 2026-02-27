@@ -29,8 +29,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film updateFilm(Film film) {
+    public Optional<Film> updateFilm(Film film) {
+        if (!films.containsKey(film.getId())) {
+            return Optional.empty();
+        }
         films.put(film.getId(), film);
-        return films.get(film.getId());
+        return Optional.of(film);
     }
 }

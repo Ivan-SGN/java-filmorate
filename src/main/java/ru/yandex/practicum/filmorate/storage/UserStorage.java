@@ -13,5 +13,5 @@ public interface UserStorage {
 
     List<User> getAllUsers();
 
-    User updateUser(User user);
+    Optional<User> updateUser(User user);
 }
