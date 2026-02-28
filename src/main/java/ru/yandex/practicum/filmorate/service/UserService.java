@@ -5,45 +5,99 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @Slf4j
 @Service
 public class UserService {
 
-    private final Map<Integer, User> users = new HashMap<>();
-    private int nextId = 1;
+    private final UserStorage userStorage;
+
+    public UserService(UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public User addUser(User user) {
         log.info("Add user request: id={}", user.getId());
         validateLogin(user);
         normalizeName(user);
-        user.setId(nextId);
-        users.put(nextId, user);
-        log.info("User added: id={}", user.getId());
-        nextId++;
-        return user;
+        User createdUser = userStorage.createUser(user);
+        log.info("User added: id={}", createdUser.getId());
+        return createdUser;
     }
 
     public User updateUser(User user) {
         log.info("Update user request: id={}", user.getId());
-        if (!users.containsKey(user.getId())) {
-            log.warn("User not found for update: id={}", user.getId());
-            throw new NotFoundException("User with id: "  + user.getId() + "not found");
-        }
+        getUserOrThrow(user.getId());
         validateLogin(user);
         normalizeName(user);
-        users.put(user.getId(), user);
-        log.info("User updated: id={}", user.getId());
-        return user;
+        User updatedUser = userStorage.updateUser(user)
+                .orElseThrow(() -> new IllegalStateException("Error during update user"));
+        log.info("User updated: id={}", updatedUser.getId());
+        return updatedUser;
     }
 
     public Collection<User> getAllUsers() {
         log.info("Get all users request");
-        return users.values();
+        return userStorage.getAllUsers();
+    }
+
+    public User getUser(int id) {
+        log.info("Get user request, id: {}", id);
+        return getUserOrThrow(id);
+    }
+
+    public void addFriend(int userId, int friendId) {
+        validateFriend(userId, friendId);
+        User user = getUserOrThrow(userId);
+        User friend = getUserOrThrow(friendId);
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId);
+        log.info("Users {} and {} are now friends", userId, friendId);
+    }
+
+    public void removeFriend(int userId, int friendId) {
+        validateFriend(userId, friendId);
+        User user = getUserOrThrow(userId);
+        User friend = getUserOrThrow(friendId);
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
+        log.info("Users {} and {} are no longer friends", userId, friendId);
+    }
+
+    public List<User> getFriends(int userId) {
+        User user = getUserOrThrow(userId);
+        return user.getFriends().stream()
+                .map(this::getUserOrThrow)
+                .toList();
+    }
+
+    public List<User> getCommonFriends(int userId, int friendId) {
+        validateFriend(userId, friendId);
+        User user = getUserOrThrow(userId);
+        User other = getUserOrThrow(friendId);
+        return user.getFriends().stream()
+                .filter(id -> other.getFriends().contains(id))
+                .map(this::getUserOrThrow)
+                .toList();
+    }
+
+    private User getUserOrThrow(int id) {
+        return userStorage.getUser(id)
+                .orElseThrow(() -> {
+                    log.warn("User not found, id={}", id);
+                    return new NotFoundException("User not found");
+                });
+    }
+
+    private void validateFriend(int userId, int friendId) {
+        if (userId == friendId) {
+            log.warn("Friend validation failed: same ids {}", friendId);
+            throw new ValidationException("Invalid friend id");
+        }
     }
 
     private void validateLogin(User user) {
