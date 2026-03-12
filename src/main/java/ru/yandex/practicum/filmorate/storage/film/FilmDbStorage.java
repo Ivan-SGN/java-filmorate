@@ -26,11 +26,17 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String INSERT_GENRE = "INSERT INTO film_genres(film_id, genre_id) VALUES (?, ?)";
     private static final String DELETE_GENRES = "DELETE FROM film_genres WHERE film_id = ?";
 
-    private static final String INSERT_LIKE = "INSERT INTO film_likes(film_id, user_id) VALUES (?, ?)";
+    private static final String INSERT_LIKE = "MERGE INTO film_likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
 
     private static final String GET_POPULAR =
-            "SELECT f.* FROM films f LEFT JOIN film_likes l ON f.id = l.film_id GROUP BY f.id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+            "SELECT f.* FROM films f " +
+            "LEFT JOIN (" +
+                "SELECT film_id, COUNT(*) AS likes_count FROM film_likes GROUP BY film_id" +
+            ") l ON f.id = l.film_id " +
+            "ORDER BY COALESCE(l.likes_count, 0) DESC, f.id " +
+            "LIMIT ?";
+
     private static final String GET_GENRES_BY_FILM =
             "SELECT g.* FROM genres g JOIN film_genres fg ON g.id = fg.genre_id WHERE fg.film_id = ? ORDER BY g.id";
 
