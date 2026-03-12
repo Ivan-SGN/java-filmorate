@@ -5,7 +5,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 import ru.yandex.practicum.filmorate.storage.mappers.MpaRowMapper;
-import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
 import java.util.List;
 import java.util.Optional;

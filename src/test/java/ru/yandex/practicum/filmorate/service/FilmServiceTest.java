@@ -14,13 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FilmServiceTest {
 
-    private InMemoryFilmStorage filmStorage;
     private InMemoryUserStorage userStorage;
     private FilmService filmService;
 
     @BeforeEach
     void setUp() {
-        filmStorage = new InMemoryFilmStorage();
+        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
         userStorage = new InMemoryUserStorage();
         filmService = new FilmService(filmStorage, userStorage, null, null);
     }
