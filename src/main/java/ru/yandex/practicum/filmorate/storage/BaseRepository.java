@@ -42,7 +42,7 @@ public class BaseRepository<T> {
         }, keyHolder);
         Number key = keyHolder.getKey();
         if (key == null) {
-            throw new RuntimeException("Ошибка при вставки сущности");
+            throw new RuntimeException("Insert error");
         }
 
         return key.longValue();
