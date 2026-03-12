@@ -36,5 +36,56 @@ public class InMemoryUserStorage implements UserStorage {
         users.put(user.getId(), user);
         return Optional.of(user);
     }
-}
 
+    @Override
+    public void addFriend(int userId, int friendId) {
+        User user = users.get(userId);
+        if (user != null) {
+            user.getFriends().add(friendId);
+        }
+    }
+
+    @Override
+    public void removeFriend(int userId, int friendId) {
+        User user = users.get(userId);
+        if (user != null) {
+            user.getFriends().remove(friendId);
+        }
+    }
+
+    @Override
+    public Collection<User> getFriends(int userId) {
+        User user = users.get(userId);
+        if (user == null) {
+            return List.of();
+        }
+        List<User> result = new ArrayList<>();
+        for (Integer id : user.getFriends()) {
+            User friend = users.get(id);
+            if (friend != null) {
+                result.add(friend);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Collection<User> getCommonFriends(int userId, int otherId) {
+        User user = users.get(userId);
+        User other = users.get(otherId);
+        if (user == null || other == null) {
+            return List.of();
+        }
+
+        List<User> result = new ArrayList<>();
+        for (Integer id : user.getFriends()) {
+            if (other.getFriends().contains(id)) {
+                User friend = users.get(id);
+                if (friend != null) {
+                    result.add(friend);
+                }
+            }
+        }
+        return result;
+    }
+}
