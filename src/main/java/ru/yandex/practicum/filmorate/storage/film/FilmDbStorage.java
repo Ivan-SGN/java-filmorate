@@ -16,8 +16,8 @@ import java.util.Set;
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
-    private static final String FIND_ALL = "SELECT * FROM films";
-    private static final String FIND_BY_ID = "SELECT * FROM films WHERE id = ?";
+    private static final String FIND_ALL = "SELECT f.*, m.name AS mpa_name FROM films f LEFT JOIN mpa m ON f.mpa_id = m.id";
+    private static final String FIND_BY_ID = "SELECT f.*, m.name AS mpa_name FROM films f LEFT JOIN mpa m ON f.mpa_id = m.id WHERE f.id = ?";
     private static final String INSERT =
             "INSERT INTO films(name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE =
@@ -30,7 +30,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
 
     private static final String GET_POPULAR =
-            "SELECT f.* FROM films f " +
+            "SELECT f.*, m.name AS mpa_name FROM films f " +
+            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
             "LEFT JOIN (" +
                 "SELECT film_id, COUNT(*) AS likes_count FROM film_likes GROUP BY film_id" +
             ") l ON f.id = l.film_id " +
