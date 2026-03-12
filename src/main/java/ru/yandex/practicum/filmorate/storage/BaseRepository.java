@@ -42,7 +42,7 @@ public class BaseRepository<T> {
         }, keyHolder);
         Number key = keyHolder.getKey();
         if (key == null) {
-            throw new RuntimeException("Insert error");
+            throw new IllegalStateException("Failed to retrieve generated key after insert");
         }
 
         return key.longValue();

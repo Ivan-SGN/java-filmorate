@@ -36,4 +36,19 @@ public class InMemoryFilmStorage implements FilmStorage {
         films.put(film.getId(), film);
         return Optional.of(film);
     }
+
+    @Override
+    public void addLike(int filmId, int userId) {
+
+    }
+
+    @Override
+    public void removeLike(int filmId, int userId) {
+
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        return List.of();
+    }
 }
