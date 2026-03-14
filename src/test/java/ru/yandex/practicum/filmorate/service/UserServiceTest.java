@@ -2,11 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
-
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import java.time.LocalDate;
-import java.util.List;
-
+import java.util.Collection;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserServiceTest {
@@ -95,10 +93,10 @@ class UserServiceTest {
 
         userService.addFriend(user1.getId(), common.getId());
         userService.addFriend(user2.getId(), common.getId());
-        List<User> commonFriends = userService.getCommonFriends(user1.getId(), user2.getId());
+        Collection<User> commonFriends = userService.getCommonFriends(user1.getId(), user2.getId());
 
         assertEquals(1, commonFriends.size());
-        assertEquals(common.getId(), commonFriends.getFirst().getId());
+        assertEquals(common.getId(), commonFriends.stream().toList().getFirst().getId());
     }
 
     @Test

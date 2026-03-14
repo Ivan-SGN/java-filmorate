@@ -1,10 +1,11 @@
 package ru.yandex.practicum.filmorate.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,12 +14,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FilmServiceTest {
 
+    private InMemoryUserStorage userStorage;
+    private FilmService filmService;
+
+    @BeforeEach
+    void setUp() {
+        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
+        userStorage = new InMemoryUserStorage();
+        filmService = new FilmService(filmStorage, userStorage, null, null);
+    }
+
     @Test
     void testUpdateFilm() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
-
         Film film = filmService.addFilm(createFilm("Film"));
         film.setName("Updated");
 
@@ -30,10 +37,6 @@ class FilmServiceTest {
 
     @Test
     void testGetAllFilms() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
-
         filmService.addFilm(createFilm("Film1"));
         filmService.addFilm(createFilm("Film2"));
 
@@ -42,10 +45,6 @@ class FilmServiceTest {
 
     @Test
     void testReleaseDateBeforeMinimumThrowsException() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
-
         Film film = createFilm("OldFilm");
         film.setReleaseDate(LocalDate.of(1800, 1, 1));
 
@@ -57,9 +56,6 @@ class FilmServiceTest {
 
     @Test
     void testAddLikeAndGetPopularFilms() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
         UserService userService = new UserService(userStorage);
 
         User user = userService.addUser(createUser());
@@ -74,9 +70,6 @@ class FilmServiceTest {
 
     @Test
     void testRemoveLike() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
         UserService userService = new UserService(userStorage);
 
         User user = userService.addUser(createUser());
@@ -89,10 +82,6 @@ class FilmServiceTest {
 
     @Test
     void testGetFilmById() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
-
         Film film = filmService.addFilm(createFilm("Film"));
 
         assertEquals(film, filmService.getFilm(film.getId()));
@@ -100,9 +89,6 @@ class FilmServiceTest {
 
     @Test
     void testAddLikeTwiceDoesNotDuplicate() {
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        InMemoryUserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
         UserService userService = new UserService(userStorage);
 
         User user = userService.addUser(createUser());

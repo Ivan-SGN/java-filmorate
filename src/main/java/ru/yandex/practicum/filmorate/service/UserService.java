@@ -1,14 +1,14 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -16,24 +16,20 @@ public class UserService {
 
     private final UserStorage userStorage;
 
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
     public User addUser(User user) {
-        log.info("Add user request: id={}", user.getId());
-        validateLogin(user);
-        normalizeName(user);
+        validateUser(user);
         User createdUser = userStorage.createUser(user);
         log.info("User added: id={}", createdUser.getId());
         return createdUser;
     }
 
     public User updateUser(User user) {
-        log.info("Update user request: id={}", user.getId());
         getUserOrThrow(user.getId());
-        validateLogin(user);
-        normalizeName(user);
+        validateUser(user);
         User updatedUser = userStorage.updateUser(user)
                 .orElseThrow(() -> new IllegalStateException("Error during update user"));
         log.info("User updated: id={}", updatedUser.getId());
@@ -51,38 +47,42 @@ public class UserService {
     }
 
     public void addFriend(int userId, int friendId) {
-        validateFriend(userId, friendId);
-        User user = getUserOrThrow(userId);
-        User friend = getUserOrThrow(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
-        log.info("Users {} and {} are now friends", userId, friendId);
+        if (userId == friendId) {
+            log.warn("User tried to add himself as friend: id={}", userId);
+            throw new ValidationException("User cannot add himself as friend");
+        }
+        getUserOrThrow(userId);
+        getUserOrThrow(friendId);
+        userStorage.addFriend(userId, friendId);
+        log.info("User {} added friend {}", userId, friendId);
     }
 
     public void removeFriend(int userId, int friendId) {
-        validateFriend(userId, friendId);
-        User user = getUserOrThrow(userId);
-        User friend = getUserOrThrow(friendId);
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
-        log.info("Users {} and {} are no longer friends", userId, friendId);
+        if (userId == friendId) {
+            log.warn("User tried to remove himself from friends: id={}", userId);
+            throw new ValidationException("User cannot remove himself from friends");
+        }
+        getUserOrThrow(userId);
+        getUserOrThrow(friendId);
+        userStorage.removeFriend(userId, friendId);
+        log.info("User {} removed friend {}", userId, friendId);
     }
 
-    public List<User> getFriends(int userId) {
-        User user = getUserOrThrow(userId);
-        return user.getFriends().stream()
-                .map(this::getUserOrThrow)
-                .toList();
+    public Collection<User> getFriends(int userId) {
+        getUserOrThrow(userId);
+        log.info("Get friends request for user {}", userId);
+        return userStorage.getFriends(userId);
     }
 
-    public List<User> getCommonFriends(int userId, int friendId) {
-        validateFriend(userId, friendId);
-        User user = getUserOrThrow(userId);
-        User other = getUserOrThrow(friendId);
-        return user.getFriends().stream()
-                .filter(id -> other.getFriends().contains(id))
-                .map(this::getUserOrThrow)
-                .toList();
+    public Collection<User> getCommonFriends(int userId, int otherId) {
+        if (userId == otherId) {
+            log.warn("User tried to get common friends with himself: id={}", userId);
+            throw new ValidationException("Users must be different");
+        }
+        getUserOrThrow(userId);
+        getUserOrThrow(otherId);
+        log.info("Get common friends for users {} and {}", userId, otherId);
+        return userStorage.getCommonFriends(userId, otherId);
     }
 
     private User getUserOrThrow(int id) {
@@ -93,23 +93,16 @@ public class UserService {
                 });
     }
 
-    private void validateFriend(int userId, int friendId) {
-        if (userId == friendId) {
-            log.warn("Friend validation failed: same ids {}", friendId);
-            throw new ValidationException("Invalid friend id");
+    private void validateUser(User user) {
+        if (user.getLogin() == null || user.getLogin().isBlank()) {
+            log.warn("Validation failed: login is empty");
+            throw new ValidationException("Login cannot be empty");
         }
-    }
-
-    private void validateLogin(User user) {
         if (user.getLogin().contains(" ")) {
-            log.warn("Validation failed: id={}", user.getId());
-            throw new ValidationException("Invalid login");
+            log.warn("Validation failed: login contains spaces");
+            throw new ValidationException("Login cannot contain spaces");
         }
-    }
-
-    private void normalizeName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
-            log.info("Name is blank. Using login as name. id={}", user.getId());
             user.setName(user.getLogin());
         }
     }
