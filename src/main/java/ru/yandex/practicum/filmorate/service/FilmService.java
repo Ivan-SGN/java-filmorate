@@ -99,7 +99,7 @@ public class FilmService {
         return filmStorage.getPopularFilms(count);
     }
 
-    private void validateFilm(Film film){
+    private void validateFilm(Film film) {
         validateReleaseDate(film);
         validateGenreFilm(film);
         validateMpaFilm(film);

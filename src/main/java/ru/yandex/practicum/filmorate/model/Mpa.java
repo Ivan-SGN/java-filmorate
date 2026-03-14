@@ -9,5 +9,5 @@ public class Mpa {
     private int id;
 
     @NotBlank
-    private String Name;
+    private String name;
 }
