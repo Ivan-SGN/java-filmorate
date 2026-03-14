@@ -40,16 +40,20 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public void addFriend(int userId, int friendId) {
         User user = users.get(userId);
+        User friend = users.get(friendId);
         if (user != null) {
             user.getFriends().add(friendId);
+            friend.getFriends().add(userId);
         }
     }
 
     @Override
     public void removeFriend(int userId, int friendId) {
         User user = users.get(userId);
+        User friend = users.get(friendId);
         if (user != null) {
             user.getFriends().remove(friendId);
+            friend.getFriends().remove(userId);
         }
     }
 
@@ -76,7 +80,6 @@ public class InMemoryUserStorage implements UserStorage {
         if (user == null || other == null) {
             return List.of();
         }
-
         List<User> result = new ArrayList<>();
         for (Integer id : user.getFriends()) {
             if (other.getFriends().contains(id)) {
