@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -22,15 +24,18 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
             @Qualifier("userDbStorage") UserStorage userStorage,
+            @Qualifier("genreDbStorage") GenreStorage genreStorage,
             @Qualifier("mpaDbStorage") MpaStorage mpaStorage
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
     }
 
@@ -45,7 +50,7 @@ public class FilmService {
         getFilmOrThrow(film.getId());
         validateFilm(film);
         Film updatedFilm = filmStorage.updateFilm(film)
-                .orElseThrow(() -> new IllegalStateException("Error during update film"));
+                .orElseThrow(() -> new IllegalStateException("Film update failed"));
         log.info("Film updated: id={}", updatedFilm.getId());
         return updatedFilm;
     }
@@ -56,8 +61,12 @@ public class FilmService {
     }
 
     public Film getFilm(int id) {
-        log.info("Get film request, id: {}", id);
+        log.info("Get film request, id={}", id);
         return getFilmOrThrow(id);
+    }
+
+    public List<Film> getPopular(int count) {
+        return filmStorage.getPopularFilms(count);
     }
 
     public void addLike(int filmId, int userId) {
@@ -90,16 +99,13 @@ public class FilmService {
                 });
     }
 
-    public List<Film> getPopular(int count) {
-        return filmStorage.getPopularFilms(count);
-    }
-
     private void validateFilm(Film film) {
         validateReleaseDate(film);
-        validateMpaFilm(film);
+        validateGenres(film);
+        validateMpa(film);
     }
 
-    private void validateMpaFilm(Film film) {
+    private void validateMpa(Film film) {
         if (film.getMpa() == null) {
             return;
         }
@@ -107,13 +113,27 @@ public class FilmService {
         mpaStorage.getById(id)
                 .orElseThrow(() -> {
                     log.warn("MPA not found: id={}", id);
-                    return new NotFoundException("MPA not found: " + id);
+                    return new NotFoundException("MPA not found");
                 });
+    }
+
+    private void validateGenres(Film film) {
+        if (film.getGenres() == null || film.getGenres().isEmpty()) {
+            return;
+        }
+        for (Genre genre : film.getGenres()) {
+            int id = genre.getId();
+            genreStorage.getById(id)
+                    .orElseThrow(() -> {
+                        log.warn("Genre not found: id={}", id);
+                        return new NotFoundException("Genre not found");
+                    });
+        }
     }
 
     private void validateReleaseDate(Film film) {
         if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            log.warn("Validation failed: id={}", film.getId());
+            log.warn("Validation failed: releaseDate={}", film.getReleaseDate());
             throw new ValidationException("Release date is before " + MIN_RELEASE_DATE);
         }
     }
