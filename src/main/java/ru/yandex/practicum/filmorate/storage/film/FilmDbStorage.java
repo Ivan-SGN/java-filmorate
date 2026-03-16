@@ -9,6 +9,9 @@ import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
 import java.util.List;
 import java.util.Optional;
+import ru.yandex.practicum.filmorate.model.Genre;
+import java.util.Map;
+import java.util.Set;
 
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
@@ -31,9 +34,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             ") l ON f.id = l.film_id " +
             "ORDER BY COALESCE(l.likes_count, 0) DESC, f.id " +
             "LIMIT ?";
-
-    private static final String GET_GENRES_BY_FILM =
-            "SELECT g.* FROM genres g JOIN film_genres fg ON g.id = fg.genre_id WHERE fg.film_id = ? ORDER BY g.id";
 
     private final GenreStorage genreStorage;
 
@@ -60,12 +60,19 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public Optional<Film> getFilm(int id) {
-        return findOne(FIND_BY_ID, id);
+        Optional<Film> film = findOne(FIND_BY_ID, id);
+        film.ifPresent(f -> enrichFilmsWithGenres(List.of(f)));
+        return film;
     }
 
     @Override
     public List<Film> getAllFilms() {
-        return findMany(FIND_ALL);
+        List<Film> films = findMany(FIND_ALL);
+        if (films.isEmpty()) {
+            return films;
+        }
+        enrichFilmsWithGenres(films);
+        return films;
     }
 
     @Override
@@ -97,6 +104,24 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        return findMany(GET_POPULAR, count);
+        List<Film> films = findMany(GET_POPULAR, count);
+        if (films.isEmpty()) {
+            return films;
+        }
+        enrichFilmsWithGenres(films);
+        return films;
+    }
+
+    private void enrichFilmsWithGenres(List<Film> films) {
+        List<Integer> ids = new java.util.ArrayList<>();
+        for (Film film : films) {
+            ids.add(film.getId());
+        }
+
+        Map<Integer, Set<Genre>> genres = genreStorage.getGenresForFilms(ids);
+
+        for (Film film : films) {
+            film.setGenres(genres.getOrDefault(film.getId(), Set.of()));
+        }
     }
 }

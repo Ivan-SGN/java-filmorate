@@ -6,17 +6,13 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -26,18 +22,15 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-    private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
             @Qualifier("userDbStorage") UserStorage userStorage,
-            @Qualifier("genreDbStorage") GenreStorage genreStorage,
             @Qualifier("mpaDbStorage") MpaStorage mpaStorage
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
-        this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
     }
 
@@ -45,7 +38,7 @@ public class FilmService {
         validateFilm(film);
         Film createdFilm = filmStorage.createFilm(film);
         log.info("Film added: id={}", createdFilm.getId());
-        return setFilmGenres(createdFilm);
+        return createdFilm;
     }
 
     public Film updateFilm(Film film) {
@@ -54,18 +47,17 @@ public class FilmService {
         Film updatedFilm = filmStorage.updateFilm(film)
                 .orElseThrow(() -> new IllegalStateException("Error during update film"));
         log.info("Film updated: id={}", updatedFilm.getId());
-        return setFilmGenres(updatedFilm);
+        return updatedFilm;
     }
 
     public Collection<Film> getAllFilms() {
         log.info("Get all films request");
-        List<Film> films = filmStorage.getAllFilms();
-        return setFilmsGenres(films);
+        return filmStorage.getAllFilms();
     }
 
     public Film getFilm(int id) {
         log.info("Get film request, id: {}", id);
-        return setFilmGenres(getFilmOrThrow(id));
+        return getFilmOrThrow(id);
     }
 
     public void addLike(int filmId, int userId) {
@@ -99,30 +91,12 @@ public class FilmService {
     }
 
     public List<Film> getPopular(int count) {
-        List<Film> films = filmStorage.getPopularFilms(count);
-        return setFilmsGenres(films);
+        return filmStorage.getPopularFilms(count);
     }
 
     private void validateFilm(Film film) {
         validateReleaseDate(film);
-        validateGenreFilm(film);
         validateMpaFilm(film);
-    }
-
-    private List<Film> setFilmsGenres(List<Film> films) {
-        Map<Integer, Set<Genre>> genresForFilms = genreStorage.getGenresForFilms(
-                films.stream()
-                        .map(Film::getId)
-                        .toList()
-        );
-        films.forEach(film ->
-                film.setGenres(genresForFilms.getOrDefault(film.getId(), Set.of()))
-        );
-        return films;
-    }
-
-    private Film setFilmGenres(Film film) {
-        return setFilmsGenres(List.of(film)).getFirst();
     }
 
     private void validateMpaFilm(Film film) {
@@ -135,20 +109,6 @@ public class FilmService {
                     log.warn("MPA not found: id={}", id);
                     return new NotFoundException("MPA not found: " + id);
                 });
-    }
-
-    private void validateGenreFilm(Film film) {
-        if (genreStorage == null || film.getGenres().isEmpty()) {
-            return;
-        }
-        for (Genre genre : film.getGenres()) {
-            int id = genre.getId();
-            genreStorage.getById(id)
-                    .orElseThrow(() -> {
-                        log.warn("Genre not found: id={}", id);
-                        return new NotFoundException("Genre not found: " + id);
-                    });
-        }
     }
 
     private void validateReleaseDate(Film film) {
