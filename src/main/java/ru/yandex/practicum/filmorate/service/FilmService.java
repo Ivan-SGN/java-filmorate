@@ -15,6 +15,8 @@ import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -43,7 +45,7 @@ public class FilmService {
         validateFilm(film);
         Film createdFilm = filmStorage.createFilm(film);
         log.info("Film added: id={}", createdFilm.getId());
-        return createdFilm;
+        return setFilmGenres(createdFilm);
     }
 
     public Film updateFilm(Film film) {
@@ -52,17 +54,18 @@ public class FilmService {
         Film updatedFilm = filmStorage.updateFilm(film)
                 .orElseThrow(() -> new IllegalStateException("Error during update film"));
         log.info("Film updated: id={}", updatedFilm.getId());
-        return updatedFilm;
+        return setFilmGenres(updatedFilm);
     }
 
     public Collection<Film> getAllFilms() {
         log.info("Get all films request");
-        return filmStorage.getAllFilms();
+        List<Film> films = filmStorage.getAllFilms();
+        return setFilmsGenres(films);
     }
 
     public Film getFilm(int id) {
         log.info("Get film request, id: {}", id);
-        return getFilmOrThrow(id);
+        return setFilmGenres(getFilmOrThrow(id));
     }
 
     public void addLike(int filmId, int userId) {
@@ -96,13 +99,30 @@ public class FilmService {
     }
 
     public List<Film> getPopular(int count) {
-        return filmStorage.getPopularFilms(count);
+        List<Film> films = filmStorage.getPopularFilms(count);
+        return setFilmsGenres(films);
     }
 
     private void validateFilm(Film film) {
         validateReleaseDate(film);
         validateGenreFilm(film);
         validateMpaFilm(film);
+    }
+
+    private List<Film> setFilmsGenres(List<Film> films) {
+        Map<Integer, Set<Genre>> genresForFilms = genreStorage.getGenresForFilms(
+                films.stream()
+                        .map(Film::getId)
+                        .toList()
+        );
+        films.forEach(film ->
+                film.setGenres(genresForFilms.getOrDefault(film.getId(), Set.of()))
+        );
+        return films;
+    }
+
+    private Film setFilmGenres(Film film) {
+        return setFilmsGenres(List.of(film)).getFirst();
     }
 
     private void validateMpaFilm(Film film) {

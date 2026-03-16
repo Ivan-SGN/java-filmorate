@@ -3,15 +3,12 @@ package ru.yandex.practicum.filmorate.storage.film;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.GenreRowMapper;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
@@ -22,9 +19,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             "INSERT INTO films(name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE =
             "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE id = ?";
-
-    private static final String INSERT_GENRE = "INSERT INTO film_genres(film_id, genre_id) VALUES (?, ?)";
-    private static final String DELETE_GENRES = "DELETE FROM film_genres WHERE film_id = ?";
 
     private static final String INSERT_LIKE = "MERGE INTO film_likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
@@ -41,8 +35,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String GET_GENRES_BY_FILM =
             "SELECT g.* FROM genres g JOIN film_genres fg ON g.id = fg.genre_id WHERE fg.film_id = ? ORDER BY g.id";
 
-    public FilmDbStorage(JdbcTemplate jdbc) {
+    private final GenreStorage genreStorage;
+
+    public FilmDbStorage(JdbcTemplate jdbc, GenreStorage genreStorage) {
         super(jdbc, new FilmRowMapper());
+        this.genreStorage = genreStorage;
     }
 
     @Override
@@ -57,24 +54,18 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 mpaId
         );
         film.setId((int) id);
-        saveGenres(film);
+        genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
         return film;
     }
 
     @Override
     public Optional<Film> getFilm(int id) {
-        Optional<Film> film = findOne(FIND_BY_ID, id);
-        film.ifPresent(f -> f.setGenres(loadGenres(f.getId())));
-        return film;
+        return findOne(FIND_BY_ID, id);
     }
 
     @Override
     public List<Film> getAllFilms() {
-        List<Film> films = findMany(FIND_ALL);
-        for (Film film : films) {
-            film.setGenres(loadGenres(film.getId()));
-        }
-        return films;
+        return findMany(FIND_ALL);
     }
 
     @Override
@@ -89,8 +80,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 mpaId,
                 film.getId()
         );
-        jdbc.update(DELETE_GENRES, film.getId());
-        saveGenres(film);
+        genreStorage.deleteGenresFromFilm(film.getId());
+        genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
         return Optional.of(film);
     }
 
@@ -106,25 +97,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        List<Film> films = findMany(GET_POPULAR, count);
-        for (Film film : films) {
-            film.setGenres(loadGenres(film.getId()));
-        }
-        return films;
-    }
-
-    private void saveGenres(Film film) {
-        if (film.getGenres() == null) return;
-        Set<Integer> uniqueGenres = new LinkedHashSet<>();
-        for (Genre genre : film.getGenres()) {
-            uniqueGenres.add(genre.getId());
-        }
-        for (Integer genreId : uniqueGenres) {
-            jdbc.update(INSERT_GENRE, film.getId(), genreId);
-        }
-    }
-
-    private Set<Genre> loadGenres(int filmId) {
-        return new LinkedHashSet<>(jdbc.query(GET_GENRES_BY_FILM, new GenreRowMapper(), filmId));
+        return findMany(GET_POPULAR, count);
     }
 }
