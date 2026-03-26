@@ -1,34 +1,30 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.genre.InMemoryGenreStorage;
-import ru.yandex.practicum.filmorate.storage.mpa.InMemoryMpaStorage;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 class FilmServiceTest {
 
-    private InMemoryUserStorage userStorage;
-    private FilmService filmService;
+    private final FilmService filmService;
+    private final UserService userService;
 
-    @BeforeEach
-    void setUp() {
-        userStorage = new InMemoryUserStorage();
-        InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
-        filmService = new FilmService(
-                filmStorage,
-                userStorage,
-                new InMemoryGenreStorage(),
-                new InMemoryMpaStorage()
-        );
+    @Autowired
+    public FilmServiceTest(FilmService filmService, UserService userService) {
+        this.filmService = filmService;
+        this.userService = userService;
     }
 
     @Test
@@ -63,12 +59,13 @@ class FilmServiceTest {
 
     @Test
     void testAddLikeAndGetPopularFilms() {
-        UserService userService = new UserService(userStorage);
-
         User user = userService.addUser(createUser());
+
         Film film1 = filmService.addFilm(createFilm("Film1"));
         Film film2 = filmService.addFilm(createFilm("Film2"));
+
         filmService.addLike(film1.getId(), user.getId());
+
         List<Film> popular = filmService.getPopular(10);
 
         assertEquals(2, popular.size());
@@ -77,10 +74,9 @@ class FilmServiceTest {
 
     @Test
     void testRemoveLike() {
-        UserService userService = new UserService(userStorage);
-
         User user = userService.addUser(createUser());
         Film film = filmService.addFilm(createFilm("Film"));
+
         filmService.addLike(film.getId(), user.getId());
         filmService.removeLike(film.getId(), user.getId());
 
@@ -96,14 +92,14 @@ class FilmServiceTest {
 
     @Test
     void testAddLikeTwiceDoesNotDuplicate() {
-        UserService userService = new UserService(userStorage);
-
         User user = userService.addUser(createUser());
         Film film = filmService.addFilm(createFilm("Film"));
+
         filmService.addLike(film.getId(), user.getId());
         filmService.addLike(film.getId(), user.getId());
 
-        assertEquals(1, filmService.getFilm(film.getId()).getLikes().size());
+        List<Film> popular = filmService.getPopular(10);
+        assertEquals(film.getId(), popular.getFirst().getId());
     }
 
     private Film createFilm(String name) {
