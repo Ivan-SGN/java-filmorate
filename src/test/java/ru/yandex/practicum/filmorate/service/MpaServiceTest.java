@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.controller.dto.MpaDto;
 
 import java.util.Collection;
 
@@ -26,16 +26,16 @@ class MpaServiceTest {
 
     @Test
     void testGetAllMpa() {
-        Collection<Mpa> mpaList = mpaService.getAllMpa();
+        Collection<MpaDto> mpaList = mpaService.getAllMpa();
 
         assertEquals(5, mpaList.size());
     }
 
     @Test
     void testGetMpaById() {
-        Mpa mpa = mpaService.getMpa(1);
+        MpaDto mpa = mpaService.getMpa(1);
 
-        assertEquals(1, mpa.getId());
+        assertEquals(1L, mpa.getId());
     }
 
     @Test
