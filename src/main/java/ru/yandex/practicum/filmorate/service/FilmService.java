@@ -9,13 +9,17 @@ import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Slf4j
 @Service
@@ -43,7 +47,7 @@ public class FilmService {
 
     public FilmRsDto addFilm(FilmRqDto filmRqDto) {
         Film film = filmMapper.map(filmRqDto);
-        validateReferences(film);
+        resolveReferences(film);
         Film createdFilm = filmStorage.createFilm(film);
         log.info("Film added: id={}", createdFilm.getId());
         return filmMapper.mapToRsDto(createdFilm);
@@ -52,7 +56,7 @@ public class FilmService {
     public FilmRsDto updateFilm(FilmRqDto filmRqDto) {
         Film film = filmMapper.map(filmRqDto);
         getFilmOrThrow(film.getId());
-        validateReferences(film);
+        resolveReferences(film);
         Film updatedFilm = filmStorage.updateFilm(film)
                 .orElseThrow(() -> new IllegalStateException("Film update failed"));
         log.info("Film updated: id={}", updatedFilm.getId());
@@ -107,34 +111,42 @@ public class FilmService {
                 });
     }
 
-    private void validateReferences(Film film) {
-        validateGenres(film);
-        validateMpa(film);
+    private void resolveReferences(Film film) {
+        film.setGenres(resolveGenres(film.getGenres()));
+        film.setMpa(resolveMpa(film.getMpa()));
     }
 
-    private void validateMpa(Film film) {
-        if (film.getMpa() == null) {
-            return;
+    private Mpa resolveMpa(Mpa mpa) {
+        if (mpa == null) {
+            return null;
         }
-        int id = film.getMpa().getId();
-        mpaStorage.getById(id)
+        int id = mpa.getId();
+        return mpaStorage.getById(id)
                 .orElseThrow(() -> {
                     log.warn("MPA not found: id={}", id);
                     return new NotFoundException("MPA not found");
                 });
     }
 
-    private void validateGenres(Film film) {
-        if (film.getGenres() == null || film.getGenres().isEmpty()) {
-            return;
+    private Set<Genre> resolveGenres(Collection<Genre> genres) {
+        if (genres == null || genres.isEmpty()) {
+            return new LinkedHashSet<>();
         }
-        for (Genre genre : film.getGenres()) {
-            int id = genre.getId();
-            genreStorage.getById(id)
+
+        Set<Integer> orderedGenreIds = new TreeSet<>();
+        for (Genre genre : genres) {
+            orderedGenreIds.add(genre.getId());
+        }
+
+        Set<Genre> resolvedGenres = new LinkedHashSet<>();
+        for (Integer id : orderedGenreIds) {
+            Genre resolvedGenre = genreStorage.getById(id)
                     .orElseThrow(() -> {
                         log.warn("Genre not found: id={}", id);
                         return new NotFoundException("Genre not found");
                     });
+            resolvedGenres.add(resolvedGenre);
         }
+        return resolvedGenres;
     }
 }

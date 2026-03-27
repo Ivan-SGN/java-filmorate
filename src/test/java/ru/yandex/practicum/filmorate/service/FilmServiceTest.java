@@ -7,10 +7,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
+import ru.yandex.practicum.filmorate.controller.dto.GenreDto;
+import ru.yandex.practicum.filmorate.controller.dto.IdDto;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -95,6 +99,35 @@ class FilmServiceTest {
         assertEquals(film.getId(), popular.getFirst().getId());
     }
 
+    @Test
+    void testAddFilmReturnsSortedGenresWithNames() {
+        FilmRqDto filmRqDto = createFilm("Film");
+        filmRqDto.setMpa(new IdDto().setId(3L));
+        filmRqDto.setGenres(orderedGenreIds(5L, 3L));
+
+        FilmRsDto created = filmService.addFilm(filmRqDto);
+
+        assertEquals(List.of(3L, 5L), genreIds(created));
+        assertEquals(List.of("Мультфильм", "Документальный"), genreNames(created));
+        assertEquals(3L, created.getMpa().getId());
+        assertEquals("PG-13", created.getMpa().getName());
+    }
+
+    @Test
+    void testUpdateFilmReturnsSortedGenresWithNames() {
+        FilmRsDto created = filmService.addFilm(createFilm("Film"));
+        FilmRqDto updateRequest = toRequestDto(created);
+        updateRequest.setMpa(new IdDto().setId(4L));
+        updateRequest.setGenres(orderedGenreIds(6L, 2L));
+
+        FilmRsDto updated = filmService.updateFilm(updateRequest);
+
+        assertEquals(List.of(2L, 6L), genreIds(updated));
+        assertEquals(List.of("Драма", "Боевик"), genreNames(updated));
+        assertEquals(4L, updated.getMpa().getId());
+        assertEquals("R", updated.getMpa().getName());
+    }
+
     private FilmRqDto createFilm(String name) {
         FilmRqDto film = new FilmRqDto();
         film.setName(name);
@@ -121,5 +154,25 @@ class FilmServiceTest {
         user.setName("name");
         user.setBirthday(LocalDate.of(1990, 1, 1));
         return user;
+    }
+
+    private Set<IdDto> orderedGenreIds(Long... ids) {
+        Set<IdDto> genres = new LinkedHashSet<>();
+        for (Long id : ids) {
+            genres.add(new IdDto().setId(id));
+        }
+        return genres;
+    }
+
+    private List<Long> genreIds(FilmRsDto film) {
+        return film.getGenres().stream()
+                .map(GenreDto::getId)
+                .toList();
+    }
+
+    private List<String> genreNames(FilmRsDto film) {
+        return film.getGenres().stream()
+                .map(GenreDto::getName)
+                .toList();
     }
 }

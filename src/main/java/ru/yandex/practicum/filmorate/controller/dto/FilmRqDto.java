@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 import ru.yandex.practicum.filmorate.controller.dto.validation.After;
 
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -31,5 +31,5 @@ public class FilmRqDto {
     @Valid
     private IdDto mpa;
 
-    private Set<@Valid IdDto> genres = new HashSet<>();
+    private Set<@Valid IdDto> genres = new LinkedHashSet<>();
 }
