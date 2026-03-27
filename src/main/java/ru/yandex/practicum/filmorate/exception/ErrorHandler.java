@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +42,31 @@ public class ErrorHandler {
                 .getFieldErrors()
                 .stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList();
+        errorResponse.put("errors", errors);
+        return errorResponse;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, List<String>> handleConstraintViolation(ConstraintViolationException e) {
+        log.warn("Constraint violation: {}", e.getMessage());
+        Map<String, List<String>> errorResponse = new HashMap<>();
+        List<String> errors = e.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .toList();
+        errorResponse.put("errors", errors);
+        return errorResponse;
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, List<String>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
+        log.warn("Handler method validation error: {}", e.getMessage());
+        Map<String, List<String>> errorResponse = new HashMap<>();
+        List<String> errors = e.getAllValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> result.getMethodParameter().getParameterName() + ": " + error.getDefaultMessage()))
                 .toList();
         errorResponse.put("errors", errors);
         return errorResponse;
