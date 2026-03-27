@@ -26,7 +26,6 @@ public class UserService {
 
     public UserDto addUser(UserDto userDto) {
         User user = userMapper.map(userDto);
-        applyDefaultName(user);
         User createdUser = userStorage.createUser(user);
         log.info("User added: id={}", createdUser.getId());
         return userMapper.mapToDto(createdUser);
@@ -35,7 +34,6 @@ public class UserService {
     public UserDto updateUser(UserDto userDto) {
         User user = userMapper.map(userDto);
         getUserOrThrow(user.getId());
-        applyDefaultName(user);
         User updatedUser = userStorage.updateUser(user)
                 .orElseThrow(() -> new IllegalStateException("Error during update user"));
         log.info("User updated: id={}", updatedUser.getId());
@@ -103,11 +101,5 @@ public class UserService {
                     log.warn("User not found, id={}", id);
                     return new NotFoundException("User not found");
                 });
-    }
-
-    private void applyDefaultName(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
     }
 }
