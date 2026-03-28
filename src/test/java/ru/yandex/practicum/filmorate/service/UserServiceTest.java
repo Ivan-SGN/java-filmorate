@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.controller.dto.UserDto;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -26,18 +26,18 @@ class UserServiceTest {
 
     @Test
     void testAddUser() {
-        User user = userService.addUser(createUser("login1"));
+        UserDto user = userService.addUser(createUser("login1"));
 
-        assertEquals(1, user.getId());
+        assertEquals(1L, user.getId());
         assertEquals("login1", user.getLogin());
     }
 
     @Test
     void testUpdateUser() {
-        User user = userService.addUser(createUser("login1"));
+        UserDto user = userService.addUser(createUser("login1"));
         user.setName("updated");
 
-        User updated = userService.updateUser(user);
+        UserDto updated = userService.updateUser(user);
 
         assertEquals("updated", updated.getName());
         assertEquals(user.getId(), updated.getId());
@@ -45,9 +45,9 @@ class UserServiceTest {
 
     @Test
     void testGetUser() {
-        User user = userService.addUser(createUser("login1"));
+        UserDto user = userService.addUser(createUser("login1"));
 
-        User found = userService.getUser(user.getId());
+        UserDto found = userService.getUser(user.getId().intValue());
 
         assertEquals(user.getId(), found.getId());
         assertEquals("login1", found.getLogin());
@@ -63,37 +63,38 @@ class UserServiceTest {
 
     @Test
     void testAddFriendIsMutual() {
-        User user1 = userService.addUser(createUser("login1"));
-        User user2 = userService.addUser(createUser("login2"));
+        UserDto user1 = userService.addUser(createUser("login1"));
+        UserDto user2 = userService.addUser(createUser("login2"));
 
-        userService.addFriend(user1.getId(), user2.getId());
+        userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
 
-        assertEquals(1, userService.getFriends(user1.getId()).size());
-        assertEquals(0, userService.getFriends(user2.getId()).size());
+        assertEquals(1, userService.getFriends(user1.getId().intValue()).size());
+        assertEquals(0, userService.getFriends(user2.getId().intValue()).size());
     }
 
     @Test
     void testRemoveFriendIsMutual() {
-        User user1 = userService.addUser(createUser("login1"));
-        User user2 = userService.addUser(createUser("login2"));
+        UserDto user1 = userService.addUser(createUser("login1"));
+        UserDto user2 = userService.addUser(createUser("login2"));
 
-        userService.addFriend(user1.getId(), user2.getId());
-        userService.removeFriend(user1.getId(), user2.getId());
+        userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
+        userService.removeFriend(user1.getId().intValue(), user2.getId().intValue());
 
-        assertEquals(0, userService.getFriends(user1.getId()).size());
-        assertEquals(0, userService.getFriends(user2.getId()).size());
+        assertEquals(0, userService.getFriends(user1.getId().intValue()).size());
+        assertEquals(0, userService.getFriends(user2.getId().intValue()).size());
     }
 
     @Test
     void testGetCommonFriends() {
-        User user1 = userService.addUser(createUser("login1"));
-        User user2 = userService.addUser(createUser("login2"));
-        User common = userService.addUser(createUser("login3"));
+        UserDto user1 = userService.addUser(createUser("login1"));
+        UserDto user2 = userService.addUser(createUser("login2"));
+        UserDto common = userService.addUser(createUser("login3"));
 
-        userService.addFriend(user1.getId(), common.getId());
-        userService.addFriend(user2.getId(), common.getId());
+        userService.addFriend(user1.getId().intValue(), common.getId().intValue());
+        userService.addFriend(user2.getId().intValue(), common.getId().intValue());
 
-        Collection<User> commonFriends = userService.getCommonFriends(user1.getId(), user2.getId());
+        Collection<UserDto> commonFriends =
+                userService.getCommonFriends(user1.getId().intValue(), user2.getId().intValue());
 
         assertEquals(1, commonFriends.size());
         assertEquals(common.getId(), commonFriends.stream().toList().getFirst().getId());
@@ -101,17 +102,17 @@ class UserServiceTest {
 
     @Test
     void testAddFriendTwiceDoesNotDuplicate() {
-        User user1 = userService.addUser(createUser("login1"));
-        User user2 = userService.addUser(createUser("login2"));
+        UserDto user1 = userService.addUser(createUser("login1"));
+        UserDto user2 = userService.addUser(createUser("login2"));
 
-        userService.addFriend(user1.getId(), user2.getId());
-        userService.addFriend(user1.getId(), user2.getId());
+        userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
+        userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
 
-        assertEquals(1, userService.getFriends(user1.getId()).size());
+        assertEquals(1, userService.getFriends(user1.getId().intValue()).size());
     }
 
-    private User createUser(String login) {
-        User user = new User();
+    private UserDto createUser(String login) {
+        UserDto user = new UserDto();
         user.setEmail(login + "@mail.com");
         user.setLogin(login);
         user.setName(login);

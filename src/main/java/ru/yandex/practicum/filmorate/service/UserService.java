@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.controller.dto.UserDto;
+import ru.yandex.practicum.filmorate.controller.dto.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -15,35 +17,39 @@ import java.util.Collection;
 public class UserService {
 
     private final UserStorage userStorage;
+    private final UserMapper userMapper;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage, UserMapper userMapper) {
         this.userStorage = userStorage;
+        this.userMapper = userMapper;
     }
 
-    public User addUser(User user) {
-        validateUser(user);
+    public UserDto addUser(UserDto userDto) {
+        User user = userMapper.map(userDto);
         User createdUser = userStorage.createUser(user);
         log.info("User added: id={}", createdUser.getId());
-        return createdUser;
+        return userMapper.mapToDto(createdUser);
     }
 
-    public User updateUser(User user) {
+    public UserDto updateUser(UserDto userDto) {
+        User user = userMapper.map(userDto);
         getUserOrThrow(user.getId());
-        validateUser(user);
         User updatedUser = userStorage.updateUser(user)
                 .orElseThrow(() -> new IllegalStateException("Error during update user"));
         log.info("User updated: id={}", updatedUser.getId());
-        return updatedUser;
+        return userMapper.mapToDto(updatedUser);
     }
 
-    public Collection<User> getAllUsers() {
+    public Collection<UserDto> getAllUsers() {
         log.info("Get all users request");
-        return userStorage.getAllUsers();
+        return userStorage.getAllUsers().stream()
+                .map(userMapper::mapToDto)
+                .toList();
     }
 
-    public User getUser(int id) {
+    public UserDto getUser(int id) {
         log.info("Get user request, id: {}", id);
-        return getUserOrThrow(id);
+        return userMapper.mapToDto(getUserOrThrow(id));
     }
 
     public void addFriend(int userId, int friendId) {
@@ -68,13 +74,15 @@ public class UserService {
         log.info("User {} removed friend {}", userId, friendId);
     }
 
-    public Collection<User> getFriends(int userId) {
+    public Collection<UserDto> getFriends(int userId) {
         getUserOrThrow(userId);
         log.info("Get friends request for user {}", userId);
-        return userStorage.getFriends(userId);
+        return userStorage.getFriends(userId).stream()
+                .map(userMapper::mapToDto)
+                .toList();
     }
 
-    public Collection<User> getCommonFriends(int userId, int otherId) {
+    public Collection<UserDto> getCommonFriends(int userId, int otherId) {
         if (userId == otherId) {
             log.warn("User tried to get common friends with himself: id={}", userId);
             throw new ValidationException("Users must be different");
@@ -82,7 +90,9 @@ public class UserService {
         getUserOrThrow(userId);
         getUserOrThrow(otherId);
         log.info("Get common friends for users {} and {}", userId, otherId);
-        return userStorage.getCommonFriends(userId, otherId);
+        return userStorage.getCommonFriends(userId, otherId).stream()
+                .map(userMapper::mapToDto)
+                .toList();
     }
 
     private User getUserOrThrow(int id) {
@@ -91,19 +101,5 @@ public class UserService {
                     log.warn("User not found, id={}", id);
                     return new NotFoundException("User not found");
                 });
-    }
-
-    private void validateUser(User user) {
-        if (user.getLogin() == null || user.getLogin().isBlank()) {
-            log.warn("Validation failed: login is empty");
-            throw new ValidationException("Login cannot be empty");
-        }
-        if (user.getLogin().contains(" ")) {
-            log.warn("Validation failed: login contains spaces");
-            throw new ValidationException("Login cannot contain spaces");
-        }
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
     }
 }

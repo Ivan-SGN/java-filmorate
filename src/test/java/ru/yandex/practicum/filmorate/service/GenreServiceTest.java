@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.controller.dto.GenreDto;
 
 import java.util.Collection;
 
@@ -26,16 +26,16 @@ class GenreServiceTest {
 
     @Test
     void testGetAllGenres() {
-        Collection<Genre> genres = genreService.getAllGenres();
+        Collection<GenreDto> genres = genreService.getAllGenres();
 
         assertEquals(6, genres.size());
     }
 
     @Test
     void testGetGenreById() {
-        Genre genre = genreService.getGenre(1);
+        GenreDto genre = genreService.getGenre(1);
 
-        assertEquals(1, genre.getId());
+        assertEquals(1L, genre.getId());
     }
 
     @Test

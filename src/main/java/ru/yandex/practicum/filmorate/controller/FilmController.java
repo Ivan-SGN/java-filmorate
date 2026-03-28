@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
+import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
@@ -21,37 +23,44 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film addFilm(@Valid @RequestBody Film film) {
-        return filmService.addFilm(film);
+    public FilmRsDto addFilm(@Valid @RequestBody FilmRqDto filmRqDto) {
+        return filmService.addFilm(filmRqDto);
     }
 
     @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film film) {
-        return filmService.updateFilm(film);
+    public FilmRsDto updateFilm(@Valid @RequestBody FilmRqDto filmRqDto) {
+        validateUpdateId(filmRqDto.getId(), "Film");
+        return filmService.updateFilm(filmRqDto);
     }
 
     @GetMapping
-    public Collection<Film> getFilms() {
+    public Collection<FilmRsDto> getFilms() {
         return filmService.getAllFilms();
     }
 
     @GetMapping("/{id}")
-    public Film getFilm(@PathVariable int id) {
+    public FilmRsDto getFilm(@PathVariable @Positive int id) {
         return filmService.getFilm(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable int id, @PathVariable int userId) {
+    public void addLike(@PathVariable @Positive int id, @PathVariable @Positive int userId) {
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable int id, @PathVariable int userId) {
+    public void removeLike(@PathVariable @Positive int id, @PathVariable @Positive int userId) {
         filmService.removeLike(id, userId);
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") @Positive Integer count) {
+    public Collection<FilmRsDto> getPopular(@RequestParam(defaultValue = "10") @Positive Integer count) {
         return filmService.getPopular(count);
+    }
+
+    private void validateUpdateId(Long id, String entityName) {
+        if (id == null || id <= 0) {
+            throw new ValidationException(entityName + " id must be positive");
+        }
     }
 }
