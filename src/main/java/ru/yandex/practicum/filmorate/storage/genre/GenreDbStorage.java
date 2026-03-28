@@ -15,6 +15,7 @@ public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorag
 
     private static final String INSERT_GENRE = "INSERT INTO film_genres(film_id, genre_id) VALUES (?, ?)";
     private static final String FIND_ALL = "SELECT * FROM genres ORDER BY id";
+    private static final String FIND_ALL_BY_ID = "SELECT * FROM genres WHERE id IN (:ids) ORDER BY id";
     private static final String FIND_BY_ID = "SELECT * FROM genres WHERE id = ?";
     private static final String DELETE_GENRE = "DELETE FROM film_genres WHERE film_id = ?";
 
@@ -38,6 +39,16 @@ public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorag
         return findMany(FIND_ALL);
     }
 
+    @Override
+    public Set<Genre> getAllById(Set<Integer> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptySet();
+        }
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("ids", ids);
+        List<Genre> genres = namedJdbc.query(FIND_ALL_BY_ID, params, mapper);
+        return new LinkedHashSet<>(genres);
+    }
     @Override
     public Optional<Genre> getById(int id) {
         return findOne(FIND_BY_ID, id);
