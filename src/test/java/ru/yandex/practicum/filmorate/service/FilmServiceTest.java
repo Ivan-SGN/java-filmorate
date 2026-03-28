@@ -73,7 +73,7 @@ class FilmServiceTest {
 
         filmService.addLike(film1.getId().intValue(), user.getId().intValue());
 
-        List<FilmRsDto> popular = filmService.getPopular(10);
+        List<FilmRsDto> popular = filmService.getPopular(10, null, null);
 
         assertEquals(2, popular.size());
         assertEquals(film1.getId(), popular.getFirst().getId());
@@ -89,7 +89,7 @@ class FilmServiceTest {
         filmService.removeLike(film1.getId().intValue(), user.getId().intValue());
         filmService.addLike(film2.getId().intValue(), user.getId().intValue());
 
-        assertEquals(film2.getId(), filmService.getPopular(10).getFirst().getId());
+        assertEquals(film2.getId(), filmService.getPopular(10, null, null).getFirst().getId());
     }
 
     @Test
@@ -108,8 +108,60 @@ class FilmServiceTest {
         filmService.addLike(film.getId().intValue(), user.getId().intValue());
         filmService.addLike(film.getId().intValue(), user.getId().intValue());
 
-        List<FilmRsDto> popular = filmService.getPopular(10);
+        List<FilmRsDto> popular = filmService.getPopular(10, null, null);
         assertEquals(film.getId(), popular.getFirst().getId());
+    }
+
+    @Test
+    void testGetPopularFilmsByGenre() {
+        UserDto user = userService.addUser(createUser());
+        FilmRsDto film1 = filmService.addFilm(createFilm("Film1").setGenres(orderedGenreIds(1L)));
+        FilmRsDto film2 = filmService.addFilm(createFilm("Film2").setGenres(orderedGenreIds(2L)));
+
+        filmService.addLike(film1.getId().intValue(), user.getId().intValue());
+        filmService.addLike(film2.getId().intValue(), user.getId().intValue());
+
+        List<FilmRsDto> popular = filmService.getPopular(10, 1, null);
+
+        assertEquals(1, popular.size());
+        assertEquals(film1.getId(), popular.getFirst().getId());
+    }
+
+    @Test
+    void testGetPopularFilmsByYear() {
+        UserDto user = userService.addUser(createUser());
+        FilmRsDto film1 = filmService.addFilm(createFilm("Film2000"));
+        FilmRsDto film2 = filmService.addFilm(createFilm("Film2001").setReleaseDate(LocalDate.of(2001, 1, 1)));
+
+        filmService.addLike(film1.getId().intValue(), user.getId().intValue());
+        filmService.addLike(film2.getId().intValue(), user.getId().intValue());
+
+        List<FilmRsDto> popular = filmService.getPopular(10, null, 2001);
+
+        assertEquals(1, popular.size());
+        assertEquals(film2.getId(), popular.getFirst().getId());
+    }
+
+    @Test
+    void testGetPopularFilmsByGenreAndYear() {
+        UserDto user = userService.addUser(createUser());
+
+        FilmRsDto film1 = filmService.addFilm(createFilm("Film1").setGenres(orderedGenreIds(1L)));
+        FilmRsDto film2 = filmService.addFilm(
+            createFilm("Film2").setGenres(orderedGenreIds(2L)).setReleaseDate(LocalDate.of(2001, 1, 1))
+        );
+        FilmRsDto film3 = filmService.addFilm(
+            createFilm("Film3").setGenres(orderedGenreIds(1L)).setReleaseDate(LocalDate.of(2002, 1, 1))
+        );
+
+        filmService.addLike(film1.getId().intValue(), user.getId().intValue());
+        filmService.addLike(film2.getId().intValue(), user.getId().intValue());
+        filmService.addLike(film3.getId().intValue(), user.getId().intValue());
+
+        List<FilmRsDto> popular = filmService.getPopular(10, 1, 2000);
+
+        assertEquals(1, popular.size());
+        assertEquals(film1.getId(), popular.getFirst().getId());
     }
 
     @Test
