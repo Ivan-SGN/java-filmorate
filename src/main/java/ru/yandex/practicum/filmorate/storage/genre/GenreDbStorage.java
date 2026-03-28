@@ -49,6 +49,7 @@ public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorag
         List<Genre> genres = namedJdbc.query(FIND_ALL_BY_ID, params, mapper);
         return new LinkedHashSet<>(genres);
     }
+
     @Override
     public Optional<Genre> getById(int id) {
         return findOne(FIND_BY_ID, id);
