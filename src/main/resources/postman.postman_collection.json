@@ -1,9 +1,9 @@
 {
   "info": {
-    "_postman_id": "55b5cfe0-39b7-45d1-a9b0-2eb0970aea84",
-    "name": "postman",
+    "_postman_id": "6dabd9f9-3802-49e5-97a6-c509b80b44d5",
+    "name": "postman Copy",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "38671740"
+    "_exporter_id": "26970957"
   },
   "item": [
     {
@@ -2743,6 +2743,212 @@
                 {
                   "key": "count",
                   "value": "1000"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Film get Popular by genre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const expectedFilmId = pm.collectionVariables.get(\"popular_genre_expected_id\");\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.be.ok;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is an array\", function () {\r",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Should return only films of requested genre\", function () {\r",
+                  "    const films = pm.response.json();\r",
+                  "    pm.expect(films.length).to.eql(1);\r",
+                  "    pm.expect(films[0].id).to.eql(expectedFilmId);\r",
+                  "    pm.expect(films[0].genres.some(g => g.id === 1)).to.be.true;\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {\r",
+                  "    const api = new API(pm);\r",
+                  "    const rnd = new RandomUtils();\r",
+                  "\r",
+                  "    try {\r",
+                  "        const user = await api.addUser(rnd.getUser());\r",
+                  "        const genreFilm = await api.addFilm({\r",
+                  "            ...rnd.getFilm(),\r",
+                  "            genres: [{ id: 1 }]\r",
+                  "        });\r",
+                  "        const otherFilm = await api.addFilm({\r",
+                  "            ...rnd.getFilm(),\r",
+                  "            genres: [{ id: 2 }]\r",
+                  "        });\r",
+                  "\r",
+                  "        await api.addLike(genreFilm.id, user.id);\r",
+                  "        await api.addLike(otherFilm.id, user.id);\r",
+                  "\r",
+                  "        pm.collectionVariables.set(\"popular_genre_expected_id\", genreFilm.id);\r",
+                  "    } catch (err) {\r",
+                  "        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+                  "    }\r",
+                  "};\r",
+                  "\r",
+                  "const interval = setInterval(() => {}, 1000);\r",
+                  "\r",
+                  "setTimeout(async () => {\r",
+                  "    try {\r",
+                  "        await main();\r",
+                  "    } catch (e) {\r",
+                  "        console.error(e);\r",
+                  "    } finally {\r",
+                  "        clearInterval(interval);\r",
+                  "    }\r",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/films/popular?count=10&genreId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "films",
+                "popular"
+              ],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "10"
+                },
+                {
+                  "key": "genreId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Film get Popular by year",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const expectedFilmId = pm.collectionVariables.get(\"popular_year_expected_id\");\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.be.ok;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is an array\", function () {\r",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Should return only films of requested year\", function () {\r",
+                  "    const films = pm.response.json();\r",
+                  "    pm.expect(films.length).to.eql(1);\r",
+                  "    pm.expect(films[0].id).to.eql(expectedFilmId);\r",
+                  "    pm.expect(films[0].releaseDate.startsWith(\"2001\")).to.be.true;\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {\r",
+                  "    const api = new API(pm);\r",
+                  "    const rnd = new RandomUtils();\r",
+                  "\r",
+                  "    try {\r",
+                  "        const user = await api.addUser(rnd.getUser());\r",
+                  "        const yearFilm = await api.addFilm({\r",
+                  "            ...rnd.getFilm(),\r",
+                  "            releaseDate: \"2001-01-01\"\r",
+                  "        });\r",
+                  "        const otherFilm = await api.addFilm({\r",
+                  "            ...rnd.getFilm(),\r",
+                  "            releaseDate: \"2000-01-01\"\r",
+                  "        });\r",
+                  "\r",
+                  "        await api.addLike(yearFilm.id, user.id);\r",
+                  "        await api.addLike(otherFilm.id, user.id);\r",
+                  "\r",
+                  "        pm.collectionVariables.set(\"popular_year_expected_id\", yearFilm.id);\r",
+                  "    } catch (err) {\r",
+                  "        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+                  "    }\r",
+                  "};\r",
+                  "\r",
+                  "const interval = setInterval(() => {}, 1000);\r",
+                  "\r",
+                  "setTimeout(async () => {\r",
+                  "    try {\r",
+                  "        await main();\r",
+                  "    } catch (e) {\r",
+                  "        console.error(e);\r",
+                  "    } finally {\r",
+                  "        clearInterval(interval);\r",
+                  "    }\r",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/films/popular?count=10&year=2001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "films",
+                "popular"
+              ],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "10"
+                },
+                {
+                  "key": "year",
+                  "value": "2001"
                 }
               ]
             }
