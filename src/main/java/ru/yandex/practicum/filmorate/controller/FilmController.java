@@ -39,19 +39,19 @@ public class FilmController {
         return filmService.getAllFilms();
     }
 
-    @GetMapping("/{id}")
-    public FilmRsDto getFilm(@PathVariable @Positive int id) {
-        return filmService.getFilm(id);
+    @GetMapping("/{filmId}")
+    public FilmRsDto getFilm(@PathVariable @Positive int filmId) {
+        return filmService.getFilm(filmId);
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable @Positive int id, @PathVariable @Positive int userId) {
-        filmService.addLike(id, userId);
+    @PutMapping("/{filmId}/like/{userId}")
+    public void addLike(@PathVariable @Positive int filmId, @PathVariable @Positive int userId) {
+        filmService.addLike(filmId, userId);
     }
 
-    @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable @Positive int id, @PathVariable @Positive int userId) {
-        filmService.removeLike(id, userId);
+    @DeleteMapping("/{filmId}/like/{userId}")
+    public void removeLike(@PathVariable @Positive int filmId, @PathVariable @Positive int userId) {
+        filmService.removeLike(filmId, userId);
     }
 
     @GetMapping("/popular")

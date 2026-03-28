@@ -38,9 +38,9 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable @Positive int id) {
-        return userService.getUser(id);
+    @GetMapping("/{userId}")
+    public UserDto getUser(@PathVariable @Positive int userId) {
+        return userService.getUser(userId);
     }
 
     @DeleteMapping("/{userId}")
@@ -49,24 +49,24 @@ public class UserController {
         userService.deleteUser(userId);
     }
 
-    @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable @Positive int id, @PathVariable @Positive int friendId) {
-        userService.addFriend(id, friendId);
+    @PutMapping("/{userId}/friends/{friendId}")
+    public void addFriend(@PathVariable @Positive int userId, @PathVariable @Positive int friendId) {
+        userService.addFriend(userId, friendId);
     }
 
-    @DeleteMapping("/{id}/friends/{friendId}")
-    public void removeFriend(@PathVariable @Positive int id, @PathVariable @Positive int friendId) {
-        userService.removeFriend(id, friendId);
+    @DeleteMapping("/{userId}/friends/{friendId}")
+    public void removeFriend(@PathVariable @Positive int userId, @PathVariable @Positive int friendId) {
+        userService.removeFriend(userId, friendId);
     }
 
-    @GetMapping("/{id}/friends")
-    public Collection<UserDto> getFriends(@PathVariable @Positive int id) {
-        return userService.getFriends(id);
+    @GetMapping("/{userId}/friends")
+    public Collection<UserDto> getFriends(@PathVariable @Positive int userId) {
+        return userService.getFriends(userId);
     }
 
-    @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<UserDto> getCommonFriends(@PathVariable @Positive int id, @PathVariable @Positive int otherId) {
-        return userService.getCommonFriends(id, otherId);
+    @GetMapping("/{userId}/friends/common/{otherId}")
+    public Collection<UserDto> getCommonFriends(@PathVariable @Positive int userId, @PathVariable @Positive int otherId) {
+        return userService.getCommonFriends(userId, otherId);
     }
 
     private void validateUpdateId(Long id, String entityName) {
