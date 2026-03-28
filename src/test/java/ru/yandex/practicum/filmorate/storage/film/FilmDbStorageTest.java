@@ -95,6 +95,31 @@ class FilmDbStorageTest {
         assertNotNull(popular);
     }
 
+    @Test
+    void testDeleteFilm() {
+        int filmId = testFilm.getId();
+
+        filmStorage.deleteFilm(filmId);
+
+        Optional<Film> deleted = filmStorage.getFilm(filmId);
+        assertTrue(deleted.isEmpty());
+    }
+
+    @Test
+    void testDeleteFilmCascadeLikes() {
+        filmStorage.addLike(testFilm.getId(), 1);
+
+        filmStorage.deleteFilm(testFilm.getId());
+
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM film_likes WHERE film_id = ?",
+                Integer.class,
+                testFilm.getId()
+        );
+
+        assertEquals(0, count);
+    }
+
     private Film createFilm() {
         Film film = new Film();
         film.setName("Test film");

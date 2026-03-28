@@ -6,11 +6,12 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -59,6 +60,22 @@ class UserServiceTest {
         userService.addUser(createUser("login2"));
 
         assertEquals(2, userService.getAllUsers().size());
+    }
+
+    @Test
+    void testDeleteUser() {
+        UserDto user = userService.addUser(createUser("login1"));
+
+        userService.deleteUser(user.getId().intValue());
+
+        assertThrows(NotFoundException.class,
+                () -> userService.getUser(user.getId().intValue()));
+    }
+
+    @Test
+    void testDeleteNonExistingUser() {
+        assertThrows(NotFoundException.class,
+                () -> userService.deleteUser(999999));
     }
 
     @Test

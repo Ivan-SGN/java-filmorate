@@ -41,15 +41,22 @@ public class UserService {
     }
 
     public Collection<UserDto> getAllUsers() {
-        log.info("Get all users request");
+        log.info("Get all users");
         return userStorage.getAllUsers().stream()
                 .map(userMapper::mapToDto)
                 .toList();
     }
 
     public UserDto getUser(int id) {
-        log.info("Get user request, id: {}", id);
+        log.info("Get user, id: {}", id);
         return userMapper.mapToDto(getUserOrThrow(id));
+    }
+
+    public void deleteUser(int userId) {
+        getUserOrThrow(userId);
+        userStorage.deleteUser(userId);
+        log.info("Deleted user, id: {}", userId);
+
     }
 
     public void addFriend(int userId, int friendId) {
