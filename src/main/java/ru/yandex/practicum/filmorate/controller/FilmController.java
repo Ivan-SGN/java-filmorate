@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
+import java.time.Year;
 import java.util.Collection;
 
 @RestController
@@ -55,8 +56,12 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<FilmRsDto> getPopular(@RequestParam(defaultValue = "10") @Positive Integer count) {
-        return filmService.getPopular(count);
+    public Collection<FilmRsDto> getPopular(
+            @RequestParam(defaultValue = "10") @Positive Integer count,
+            @RequestParam(required = false) @Positive Integer genreId,
+            @RequestParam(required = false) Year year
+    ) {
+        return filmService.getPopular(count, genreId, year);
     }
 
     @GetMapping("/common")

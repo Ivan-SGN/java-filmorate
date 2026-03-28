@@ -10,10 +10,14 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
+import java.time.Year;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @JdbcTest
 @AutoConfigureTestDatabase
@@ -71,7 +75,7 @@ class FilmDbStorageTest {
     void testAddLike() {
         filmStorage.addLike(testFilm.getId(), 1);
 
-        List<Film> popular = filmStorage.getPopularFilms(10);
+        List<Film> popular = filmStorage.getPopularFilms(10, null, null);
 
         assertEquals(testFilm.getId(), popular.getFirst().getId());
     }
@@ -80,7 +84,7 @@ class FilmDbStorageTest {
     void testGetPopularFilms() {
         filmStorage.addLike(testFilm.getId(), 1);
 
-        List<Film> popular = filmStorage.getPopularFilms(10);
+        List<Film> popular = filmStorage.getPopularFilms(10, null, null);
 
         assertFalse(popular.isEmpty());
     }
@@ -90,9 +94,46 @@ class FilmDbStorageTest {
         filmStorage.addLike(testFilm.getId(), 1);
         filmStorage.removeLike(testFilm.getId(), 1);
 
-        List<Film> popular = filmStorage.getPopularFilms(10);
+        List<Film> popular = filmStorage.getPopularFilms(10, null, null);
 
         assertNotNull(popular);
+    }
+
+    @Test
+    void testGetPopularFilmsFilteredByGenre() {
+        Film film1 = createFilm();
+        film1.setGenres(genres(1));
+        Film film2 = createFilm();
+        film2.setGenres(genres(2));
+
+        Film created1 = filmStorage.createFilm(film1);
+        Film created2 = filmStorage.createFilm(film2);
+
+        filmStorage.addLike(created1.getId(), 1);
+        filmStorage.addLike(created2.getId(), 1);
+
+        List<Film> popular = filmStorage.getPopularFilms(10, 1, null);
+
+        assertEquals(1, popular.size());
+        assertEquals(created1.getId(), popular.getFirst().getId());
+    }
+
+    @Test
+    void testGetPopularFilmsFilteredByYear() {
+        Film film1 = createFilm();
+        Film film2 = createFilm();
+        film2.setReleaseDate(LocalDate.of(2001, 1, 1));
+
+        Film created1 = filmStorage.createFilm(film1);
+        Film created2 = filmStorage.createFilm(film2);
+
+        filmStorage.addLike(created1.getId(), 1);
+        filmStorage.addLike(created2.getId(), 1);
+
+        List<Film> popular = filmStorage.getPopularFilms(10, null, Year.of(2001));
+
+        assertEquals(1, popular.size());
+        assertEquals(created2.getId(), popular.getFirst().getId());
     }
 
     @Test
@@ -159,5 +200,15 @@ class FilmDbStorageTest {
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(100);
         return film;
+    }
+
+    private Set<Genre> genres(int... ids) {
+        Set<Genre> genres = new LinkedHashSet<>();
+        for (int id : ids) {
+            Genre genre = new Genre();
+            genre.setId(id);
+            genres.add(genre);
+        }
+        return genres;
     }
 }
