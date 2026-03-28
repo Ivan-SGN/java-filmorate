@@ -54,7 +54,7 @@ class FilmServiceTest {
 
         filmService.deleteFilm(film.getId().intValue());
 
-        assertThrows(RuntimeException.class,
+        assertThrows(NotFoundException.class,
                 () -> filmService.getFilm(film.getId().intValue()));
     }
 

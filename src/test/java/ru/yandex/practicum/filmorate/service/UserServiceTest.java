@@ -68,7 +68,7 @@ class UserServiceTest {
 
         userService.deleteUser(user.getId().intValue());
 
-        assertThrows(RuntimeException.class,
+        assertThrows(NotFoundException.class,
                 () -> userService.getUser(user.getId().intValue()));
     }
 
