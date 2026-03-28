@@ -61,6 +61,7 @@ class UserServiceTest {
 
         assertEquals(2, userService.getAllUsers().size());
     }
+
     @Test
     void testDeleteUser() {
         UserDto user = userService.addUser(createUser("login1"));
