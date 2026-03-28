@@ -128,6 +128,18 @@ class FilmServiceTest {
     }
 
     @Test
+    void testGetPopularFilmsByGenreReturnsEmptyListWhenNoFilmsMatch() {
+        UserDto user = userService.addUser(createUser());
+        FilmRsDto film = filmService.addFilm(createFilm("Film").setGenres(orderedGenreIds(2L)));
+
+        filmService.addLike(film.getId().intValue(), user.getId().intValue());
+
+        List<FilmRsDto> popular = filmService.getPopular(10, 1, null);
+
+        assertTrue(popular.isEmpty());
+    }
+
+    @Test
     void testGetPopularFilmsByYear() {
         UserDto user = userService.addUser(createUser());
         FilmRsDto film1 = filmService.addFilm(createFilm("Film2000"));
@@ -140,6 +152,18 @@ class FilmServiceTest {
 
         assertEquals(1, popular.size());
         assertEquals(film2.getId(), popular.getFirst().getId());
+    }
+
+    @Test
+    void testGetPopularFilmsByYearReturnsEmptyListWhenNoFilmsMatch() {
+        UserDto user = userService.addUser(createUser());
+        FilmRsDto film = filmService.addFilm(createFilm("Film2000"));
+
+        filmService.addLike(film.getId().intValue(), user.getId().intValue());
+
+        List<FilmRsDto> popular = filmService.getPopular(10, null, 2001);
+
+        assertTrue(popular.isEmpty());
     }
 
     @Test
