@@ -1,7 +1,7 @@
 {
   "info": {
-    "_postman_id": "1d36b5bf-0de5-4c5d-8049-20892be11449",
-    "name": "add-database",
+    "_postman_id": "45176e4b-77ed-4b39-896d-1d396b494a87",
+    "name": "postman",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "38671740"
   },
@@ -555,6 +555,143 @@
               ],
               "path": [
                 "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    let user;",
+                  "    try {",
+                  "        user = await api.addUser(rnd.getUser());",
+                  "        pm.collectionVariables.set(\"user_id\", user.id);",
+                  "    } catch(err) {",
+                  "        console.error(\"Ошибка при подготовке тестовых данных.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => ",
+                  "    {",
+                  "        try {",
+                  "            await main();",
+                  "        } catch (e) {",
+                  "            console.error(e);",
+                  "        } finally {",
+                  "            clearInterval(interval);",
+                  "        }",
+                  "    },  ",
+                  "    100 ",
+                  ");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const user_id = pm.collectionVariables.get(\"user_id\");",
+                  "const baseUrl = pm.collectionVariables.get(\"baseUrl\");",
+                  "",
+                  "pm.test(\"Status code is 200 or 204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200,204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + \"/users/\" + user_id,",
+                  "    method: \"GET\",",
+                  "    header: { \"Content-Type\": \"application/json\" }",
+                  "}, (error, response) => {",
+                  "    pm.test(\"Deleted user should not exist\", function () {",
+                  "        pm.expect(response.code).to.be.equal(404);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user Fail unknown id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set(\"user_id\", 999999);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.equal(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Has error response\", function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
               ]
             }
           },
@@ -2607,6 +2744,143 @@
                   "key": "count",
                   "value": "1000"
                 }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete film",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    let user;",
+                  "    try {",
+                  "        user = await api.addUser(rnd.getUser());",
+                  "        pm.collectionVariables.set(\"user_id\", user.id);",
+                  "    } catch(err) {",
+                  "        console.error(\"Ошибка при подготовке тестовых данных.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => ",
+                  "    {",
+                  "        try {",
+                  "            await main();",
+                  "        } catch (e) {",
+                  "            console.error(e);",
+                  "        } finally {",
+                  "            clearInterval(interval);",
+                  "        }",
+                  "    },  ",
+                  "    100 ",
+                  ");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const user_id = pm.collectionVariables.get(\"user_id\");",
+                  "const baseUrl = pm.collectionVariables.get(\"baseUrl\");",
+                  "",
+                  "pm.test(\"Status code is 200 or 204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200,204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + \"/users/\" + user_id,",
+                  "    method: \"GET\",",
+                  "    header: { \"Content-Type\": \"application/json\" }",
+                  "}, (error, response) => {",
+                  "    pm.test(\"Deleted user should not exist\", function () {",
+                  "        pm.expect(response.code).to.be.equal(404);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete film Fail unknown id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set(\"user_id\", 999999);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.equal(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Has error response\", function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
               ]
             }
           },
@@ -5209,6 +5483,10 @@
     },
     {
       "key": "new_user_info",
+      "value": ""
+    },
+    {
+      "key": "user_id",
       "value": ""
     }
   ]
