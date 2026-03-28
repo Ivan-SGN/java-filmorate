@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "45176e4b-77ed-4b39-896d-1d396b494a87",
+    "_postman_id": "55b5cfe0-39b7-45d1-a9b0-2eb0970aea84",
     "name": "postman",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "38671740"
@@ -2750,6 +2750,133 @@
           "response": []
         },
         {
+          "name": "Film get Common",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const expected = pm.collectionVariables.get(\"common_films_expected\");\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is array\", function () {\r",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Should return only common films\", function () {\r",
+                  "    const responseIds = pm.response.json().map(f => f.id);\r",
+                  "\r",
+                  "    pm.expect(responseIds.length).to.eql(expected.length);\r",
+                  "    expected.forEach(id => {\r",
+                  "        pm.expect(responseIds).to.include(id);\r",
+                  "    });\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Sorted by popularity desc\", function () {\r",
+                  "    const films = pm.response.json();\r",
+                  "\r",
+                  "    for (let i = 0; i < films.length - 1; i++) {\r",
+                  "        const current = films[i].likes?.length || 0;\r",
+                  "        const next = films[i + 1].likes?.length || 0;\r",
+                  "\r",
+                  "        pm.expect(current).to.be.at.least(next);\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {\r",
+                  "    const api = new API(pm);\r",
+                  "    const rnd = new RandomUtils();\r",
+                  "\r",
+                  "    let user1, user2, film1, film2, film3;\r",
+                  "\r",
+                  "    try {\r",
+                  "        user1 = await api.addUser(rnd.getUser());\r",
+                  "        user2 = await api.addUser(rnd.getUser());\r",
+                  "\r",
+                  "        film1 = await api.addFilm(rnd.getFilm());\r",
+                  "        film2 = await api.addFilm(rnd.getFilm());\r",
+                  "        film3 = await api.addFilm(rnd.getFilm());\r",
+                  "\r",
+                  "        await api.addLike(film1.id, user1.id);\r",
+                  "        await api.addLike(film1.id, user2.id);\r",
+                  "\r",
+                  "        await api.addLike(film2.id, user1.id);\r",
+                  "        await api.addLike(film2.id, user2.id);\r",
+                  "\r",
+                  "        await api.addLike(film3.id, user1.id);\r",
+                  "\r",
+                  "        pm.collectionVariables.set(\"user_id\", user1.id);\r",
+                  "        pm.collectionVariables.set(\"friend_id\", user2.id);\r",
+                  "\r",
+                  "        pm.collectionVariables.set(\"common_films_expected\", [film1.id, film2.id]);\r",
+                  "\r",
+                  "    } catch (err) {\r",
+                  "        console.error(\"Ошибка при подготовке данных\", err);\r",
+                  "    }\r",
+                  "};\r",
+                  "\r",
+                  "const interval = setInterval(() => {}, 1000);\r",
+                  "\r",
+                  "setTimeout(async () => {\r",
+                  "    try {\r",
+                  "        await main();\r",
+                  "    } catch (e) {\r",
+                  "        console.error(e);\r",
+                  "    } finally {\r",
+                  "        clearInterval(interval);\r",
+                  "    }\r",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/films/common?userId={{user_id}}&friendId={{friend_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "films",
+                "common"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user_id}}"
+                },
+                {
+                  "key": "friendId",
+                  "value": "{{friend_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Delete film",
           "event": [
             {
@@ -5434,8 +5561,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080",
-      "type": "string"
+      "value": "http://localhost:8080"
     },
     {
       "key": "id",
@@ -5487,6 +5613,10 @@
     },
     {
       "key": "user_id",
+      "value": ""
+    },
+    {
+      "key": "common_films_expected",
       "value": ""
     }
   ]

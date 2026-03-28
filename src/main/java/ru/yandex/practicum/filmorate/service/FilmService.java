@@ -81,6 +81,12 @@ public class FilmService {
                 .toList();
     }
 
+    public List<FilmRsDto> getCommon(int userId, int friendId) {
+        return filmStorage.getCommonFilms(userId, friendId).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
     public void addLike(int filmId, int userId) {
         getFilmOrThrow(filmId);
         getUserOrThrow(userId);
