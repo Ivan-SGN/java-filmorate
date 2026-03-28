@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import java.time.Year;
 import java.util.ArrayList;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -126,7 +127,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
+    public List<Film> getPopularFilms(int count, Integer genreId, Year year) {
         StringBuilder sql = new StringBuilder(
             "SELECT f.*, m.name AS mpa_name " +
                 "FROM films f " +
@@ -147,7 +148,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         if (year != null) {
             conditions.add("EXTRACT(YEAR FROM f.release_date) = :year");
-            params.addValue("year", year);
+            params.addValue("year", year.getValue());
         }
 
         if (!conditions.isEmpty()) {

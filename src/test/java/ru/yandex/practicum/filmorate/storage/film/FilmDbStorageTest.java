@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -129,7 +130,7 @@ class FilmDbStorageTest {
         filmStorage.addLike(created1.getId(), 1);
         filmStorage.addLike(created2.getId(), 1);
 
-        List<Film> popular = filmStorage.getPopularFilms(10, null, 2001);
+        List<Film> popular = filmStorage.getPopularFilms(10, null, Year.of(2001));
 
         assertEquals(1, popular.size());
         assertEquals(created2.getId(), popular.getFirst().getId());

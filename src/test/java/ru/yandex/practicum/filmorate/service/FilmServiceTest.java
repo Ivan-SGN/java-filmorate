@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.controller.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -171,7 +172,7 @@ class FilmServiceTest {
         filmService.addLike(film1.getId().intValue(), user.getId().intValue());
         filmService.addLike(film2.getId().intValue(), user.getId().intValue());
 
-        List<FilmRsDto> popular = filmService.getPopular(10, null, 2001);
+        List<FilmRsDto> popular = filmService.getPopular(10, null, Year.of(2001));
 
         assertEquals(1, popular.size());
         assertEquals(film2.getId(), popular.getFirst().getId());
@@ -184,7 +185,7 @@ class FilmServiceTest {
 
         filmService.addLike(film.getId().intValue(), user.getId().intValue());
 
-        List<FilmRsDto> popular = filmService.getPopular(10, null, 2001);
+        List<FilmRsDto> popular = filmService.getPopular(10, null, Year.of(2001));
 
         assertTrue(popular.isEmpty());
     }
@@ -205,7 +206,7 @@ class FilmServiceTest {
         filmService.addLike(film2.getId().intValue(), user.getId().intValue());
         filmService.addLike(film3.getId().intValue(), user.getId().intValue());
 
-        List<FilmRsDto> popular = filmService.getPopular(10, 1, 2000);
+        List<FilmRsDto> popular = filmService.getPopular(10, 1, Year.of(2000));
 
         assertEquals(1, popular.size());
         assertEquals(film1.getId(), popular.getFirst().getId());

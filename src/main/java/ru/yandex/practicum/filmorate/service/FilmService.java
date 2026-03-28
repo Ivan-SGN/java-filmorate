@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.time.Year;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ public class FilmService {
         return filmMapper.mapToRsDto(getFilmOrThrow(id));
     }
 
-    public List<FilmRsDto> getPopular(int count, Integer genreId, Integer year) {
+    public List<FilmRsDto> getPopular(int count, Integer genreId, Year year) {
         validateGenreFilter(genreId);
         return filmStorage.getPopularFilms(count, genreId, year).stream()
                 .map(filmMapper::mapToRsDto)
