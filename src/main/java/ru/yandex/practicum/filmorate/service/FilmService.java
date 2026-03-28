@@ -75,8 +75,9 @@ public class FilmService {
         return filmMapper.mapToRsDto(getFilmOrThrow(id));
     }
 
-    public List<FilmRsDto> getPopular(int count) {
-        return filmStorage.getPopularFilms(count).stream()
+    public List<FilmRsDto> getPopular(int count, Integer genreId, Integer year) {
+        validateGenreFilter(genreId);
+        return filmStorage.getPopularFilms(count, genreId, year).stream()
                 .map(filmMapper::mapToRsDto)
                 .toList();
     }
@@ -114,6 +115,17 @@ public class FilmService {
                 .orElseThrow(() -> {
                     log.warn("User not found, id={}", id);
                     return new NotFoundException("User not found");
+                });
+    }
+
+    private void validateGenreFilter(Integer genreId) {
+        if (genreId == null) {
+            return;
+        }
+        genreStorage.getById(genreId)
+                .orElseThrow(() -> {
+                    log.warn("Genre not found, id={}", genreId);
+                    return new NotFoundException("Genre not found");
                 });
     }
 

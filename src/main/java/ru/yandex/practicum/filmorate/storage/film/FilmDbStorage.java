@@ -1,6 +1,9 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import java.util.ArrayList;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
@@ -29,20 +32,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String INSERT_LIKE = "MERGE INTO film_likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
 
-    private static final String GET_POPULAR =
-            "SELECT f.*, m.name AS mpa_name FROM films f " +
-            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-            "LEFT JOIN (" +
-                "SELECT film_id, COUNT(*) AS likes_count FROM film_likes GROUP BY film_id" +
-            ") l ON f.id = l.film_id " +
-            "ORDER BY COALESCE(l.likes_count, 0) DESC, f.id " +
-            "LIMIT ?";
-
     private final GenreStorage genreStorage;
+    private final NamedParameterJdbcTemplate namedJdbc;
 
-    public FilmDbStorage(JdbcTemplate jdbc, GenreStorage genreStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, GenreStorage genreStorage, NamedParameterJdbcTemplate namedJdbc) {
         super(jdbc, new FilmRowMapper());
         this.genreStorage = genreStorage;
+        this.namedJdbc = namedJdbc;
     }
 
     @Override
@@ -111,11 +107,41 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
-        List<Film> films = findMany(GET_POPULAR, count);
-        if (films.isEmpty()) {
-            return films;
+    public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT f.*, m.name AS mpa_name " +
+                "FROM films f " +
+                "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                "LEFT JOIN (" +
+                "SELECT film_id, COUNT(*) AS likes_count " +
+                "FROM film_likes GROUP BY film_id" +
+                ") l ON f.id = l.film_id "
+        );
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        List<String> conditions = new ArrayList<>();
+
+        if (genreId != null) {
+            sql.append("LEFT JOIN film_genres fg ON f.id = fg.film_id ");
+            conditions.add("fg.genre_id = :genreId");
+            params.addValue("genreId", genreId);
         }
+
+        if (year != null) {
+            conditions.add("EXTRACT(YEAR FROM f.release_date) = :year");
+            params.addValue("year", year);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
+        }
+
+        sql.append("ORDER BY COALESCE(l.likes_count, 0) DESC, f.id ");
+        sql.append("LIMIT :count");
+
+        params.addValue("count", count);
+
+        List<Film> films = namedJdbc.query(sql.toString(), params, mapper);
+
         enrichFilmsWithGenres(films);
         return films;
     }
