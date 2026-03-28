@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
@@ -56,6 +57,12 @@ public class FilmController {
     @GetMapping("/popular")
     public Collection<FilmRsDto> getPopular(@RequestParam(defaultValue = "10") @Positive Integer count) {
         return filmService.getPopular(count);
+    }
+
+    @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFilm(@PathVariable @Positive int filmId) {
+        filmService.deleteFilm(filmId);
     }
 
     private void validateUpdateId(Long id, String entityName) {

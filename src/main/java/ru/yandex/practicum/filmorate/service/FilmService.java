@@ -95,6 +95,12 @@ public class FilmService {
         log.info("User {} removed like from film {}", userId, filmId);
     }
 
+    public void deleteFilm(int filmId) {
+        getFilmOrThrow(filmId);
+        filmStorage.deleteFilm(filmId);
+        log.info("Film {} deleted", filmId);
+    }
+
     private Film getFilmOrThrow(int id) {
         return filmStorage.getFilm(id)
                 .orElseThrow(() -> {

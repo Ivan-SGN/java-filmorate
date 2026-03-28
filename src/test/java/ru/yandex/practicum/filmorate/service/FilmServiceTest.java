@@ -5,18 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
-import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
-import ru.yandex.practicum.filmorate.controller.dto.GenreDto;
-import ru.yandex.practicum.filmorate.controller.dto.IdDto;
-import ru.yandex.practicum.filmorate.controller.dto.UserDto;
+import ru.yandex.practicum.filmorate.controller.dto.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -49,6 +46,22 @@ class FilmServiceTest {
         filmService.addFilm(createFilm("Film2"));
 
         assertEquals(2, filmService.getAllFilms().size());
+    }
+
+    @Test
+    void testDeleteFilm() {
+        FilmRsDto film = filmService.addFilm(createFilm("Film"));
+
+        filmService.deleteFilm(film.getId().intValue());
+
+        assertThrows(RuntimeException.class,
+                () -> filmService.getFilm(film.getId().intValue()));
+    }
+
+    @Test
+    void testDeleteNonExistingFilm() {
+        assertThrows(NotFoundException.class,
+                () -> filmService.deleteFilm(999999));
     }
 
     @Test
@@ -165,14 +178,10 @@ class FilmServiceTest {
     }
 
     private List<Long> genreIds(FilmRsDto film) {
-        return film.getGenres().stream()
-                .map(GenreDto::getId)
-                .toList();
+        return film.getGenres().stream().map(GenreDto::getId).toList();
     }
 
     private List<String> genreNames(FilmRsDto film) {
-        return film.getGenres().stream()
-                .map(GenreDto::getName)
-                .toList();
+        return film.getGenres().stream().map(GenreDto::getName).toList();
     }
 }

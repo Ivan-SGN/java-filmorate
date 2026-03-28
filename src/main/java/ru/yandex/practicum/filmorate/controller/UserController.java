@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
@@ -40,6 +41,12 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDto getUser(@PathVariable @Positive int id) {
         return userService.getUser(id);
+    }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable @Positive int userId) {
+        userService.deleteUser(userId);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

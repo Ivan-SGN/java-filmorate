@@ -9,11 +9,13 @@ public interface FilmStorage {
 
     Film createFilm(Film film);
 
-    Optional<Film> getFilm(int id);
+    Optional<Film> getFilm(int filmId);
 
     List<Film> getAllFilms();
 
     Optional<Film> updateFilm(Film film);
+
+    void deleteFilm (int filmId);
 
     void addLike(int filmId, int userId);
 

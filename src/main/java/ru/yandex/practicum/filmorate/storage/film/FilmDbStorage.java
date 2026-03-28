@@ -23,6 +23,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String UPDATE =
             "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE id = ?";
 
+    private static final String DELETE =
+            "DELETE FROM films WHERE id = ?";
+
     private static final String INSERT_LIKE = "MERGE INTO film_likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
 
@@ -59,8 +62,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public Optional<Film> getFilm(int id) {
-        Optional<Film> film = findOne(FIND_BY_ID, id);
+    public Optional<Film> getFilm(int filmId) {
+        Optional<Film> film = findOne(FIND_BY_ID, filmId);
         film.ifPresent(f -> enrichFilmsWithGenres(List.of(f)));
         return film;
     }
@@ -90,6 +93,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         genreStorage.deleteGenresFromFilm(film.getId());
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
         return Optional.of(film);
+    }
+
+    @Override
+    public void deleteFilm(int filmId) {
+        jdbc.update(DELETE, filmId);
     }
 
     @Override

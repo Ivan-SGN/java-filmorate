@@ -105,6 +105,28 @@ public class UserDbStorageTest {
         assertEquals(1, commonFriends.size());
     }
 
+    @Test
+    void testDeleteUser() {
+        int userId = testUser.getId();
+
+        userStorage.deleteUser(userId);
+
+        Optional<User> deleted = userStorage.getUser(userId);
+        assertTrue(deleted.isEmpty());
+    }
+
+    @Test
+    void testDeleteUserCascadeFriends() {
+        User friend = userStorage.createUser(createUser("login2"));
+
+        userStorage.addFriend(testUser.getId(), friend.getId());
+        userStorage.deleteUser(testUser.getId());
+
+        Collection<User> friendsOfFriend = userStorage.getFriends(friend.getId());
+
+        assertEquals(0, friendsOfFriend.size());
+    }
+
     private User createUser(String login) {
         User user = new User();
         user.setEmail(login + "@mail.com");
