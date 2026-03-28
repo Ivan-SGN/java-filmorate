@@ -49,6 +49,29 @@ class FilmServiceTest {
     }
 
     @Test
+    void testGetCommonFilms() {
+        UserDto user1 = userService.addUser(createUser());
+        UserDto user2 = userService.addUser(createUser());
+        FilmRsDto film1 = filmService.addFilm(createFilm("Film1"));
+        FilmRsDto film2 = filmService.addFilm(createFilm("Film2"));
+        FilmRsDto film3 = filmService.addFilm(createFilm("Film3"));
+
+        filmService.addLike(film1.getId().intValue(), user1.getId().intValue());
+        filmService.addLike(film1.getId().intValue(), user2.getId().intValue());
+        filmService.addLike(film2.getId().intValue(), user1.getId().intValue());
+        filmService.addLike(film2.getId().intValue(), user2.getId().intValue());
+        filmService.addLike(film3.getId().intValue(), user1.getId().intValue());
+        List<FilmRsDto> common = filmService.getCommon(
+                user1.getId().intValue(),
+                user2.getId().intValue()
+        );
+
+        assertEquals(2, common.size());
+        assertEquals(film1.getId(), common.get(0).getId());
+        assertEquals(film2.getId(), common.get(1).getId());
+    }
+
+    @Test
     void testDeleteFilm() {
         FilmRsDto film = filmService.addFilm(createFilm("Film"));
 

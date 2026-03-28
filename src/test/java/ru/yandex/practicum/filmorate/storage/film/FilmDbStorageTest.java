@@ -160,6 +160,38 @@ class FilmDbStorageTest {
         assertEquals(0, count);
     }
 
+    @Test
+    void testGetCommonFilms() {
+        Film secondFilm = filmStorage.createFilm(createFilm());
+        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (2,'test2@mail.com','login2','name2','1991-01-01')");
+
+        filmStorage.addLike(testFilm.getId(), 1);
+        filmStorage.addLike(testFilm.getId(), 2);
+        filmStorage.addLike(secondFilm.getId(), 1);
+        List<Film> common = filmStorage.getCommonFilms(1, 2);
+
+        assertEquals(1, common.size());
+        assertEquals(testFilm.getId(), common.get(0).getId());
+    }
+
+    @Test
+    void testGetCommonFilmsSortedByPopularity() {
+        Film secondFilm = filmStorage.createFilm(createFilm());
+        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (2,'test2@mail.com','login2','name2','1991-01-01')");
+        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (3,'test3@mail.com','login3','name3','1992-01-01')");
+
+        filmStorage.addLike(testFilm.getId(), 1);
+        filmStorage.addLike(testFilm.getId(), 2);
+        filmStorage.addLike(testFilm.getId(), 3);
+        filmStorage.addLike(secondFilm.getId(), 1);
+        filmStorage.addLike(secondFilm.getId(), 2);
+        List<Film> common = filmStorage.getCommonFilms(1, 2);
+
+        assertEquals(2, common.size());
+        assertEquals(testFilm.getId(), common.get(0).getId());
+        assertEquals(secondFilm.getId(), common.get(1).getId());
+    }
+
     private Film createFilm() {
         Film film = new Film();
         film.setName("Test film");

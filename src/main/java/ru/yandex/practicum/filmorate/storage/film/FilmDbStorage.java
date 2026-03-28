@@ -32,6 +32,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String INSERT_LIKE = "MERGE INTO film_likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
 
+    private static final String GET_COMMON =
+        "SELECT f.*, m.name AS mpa_name FROM films f " +
+            "JOIN film_likes fl1 ON f.id = fl1.film_id AND fl1.user_id = ? " +
+            "JOIN film_likes fl2 ON f.id = fl2.film_id AND fl2.user_id = ? " +
+            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+            "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+            "GROUP BY f.id, m.name " +
+            "ORDER BY COUNT(fl.user_id) DESC";
+
     private final GenreStorage genreStorage;
     private final NamedParameterJdbcTemplate namedJdbc;
 
@@ -67,6 +76,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public List<Film> getAllFilms() {
         List<Film> films = findMany(FIND_ALL);
+        if (films.isEmpty()) {
+            return films;
+        }
+        enrichFilmsWithGenres(films);
+        return films;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        List<Film> films = findMany(GET_COMMON, userId, friendId);
         if (films.isEmpty()) {
             return films;
         }

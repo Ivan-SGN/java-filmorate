@@ -16,10 +16,10 @@ import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -78,6 +78,12 @@ public class FilmService {
     public List<FilmRsDto> getPopular(int count, Integer genreId, Integer year) {
         validateGenreFilter(genreId);
         return filmStorage.getPopularFilms(count, genreId, year).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
+    public List<FilmRsDto> getCommon(int userId, int friendId) {
+        return filmStorage.getCommonFilms(userId, friendId).stream()
                 .map(filmMapper::mapToRsDto)
                 .toList();
     }
@@ -148,23 +154,25 @@ public class FilmService {
 
     private Set<Genre> resolveGenres(Collection<Genre> genres) {
         if (genres == null || genres.isEmpty()) {
-            return new LinkedHashSet<>();
+            return new HashSet<>();
         }
+        Set<Integer> genreIds = genres.stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+        Set<Genre> foundGenres = genreStorage.getAllById(genreIds);
+        validateGenres(foundGenres, genreIds);
+        return foundGenres;
+    }
 
-        Set<Integer> orderedGenreIds = new TreeSet<>();
-        for (Genre genre : genres) {
-            orderedGenreIds.add(genre.getId());
+    private void validateGenres(Set<Genre> foundGenres, Set<Integer> requestedGenreIds) {
+        Set<Integer> foundGenreIds = foundGenres.stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+        Set<Integer> missingGenreIds = new HashSet<>(requestedGenreIds);
+        missingGenreIds.removeAll(foundGenreIds);
+        if (!missingGenreIds.isEmpty()) {
+            log.warn("Genres not found: missingIds={}", missingGenreIds);
+            throw new NotFoundException("Genres not found: " + missingGenreIds);
         }
-
-        Set<Genre> resolvedGenres = new LinkedHashSet<>();
-        for (Integer id : orderedGenreIds) {
-            Genre resolvedGenre = genreStorage.getById(id)
-                    .orElseThrow(() -> {
-                        log.warn("Genre not found: id={}", id);
-                        return new NotFoundException("Genre not found");
-                    });
-            resolvedGenres.add(resolvedGenre);
-        }
-        return resolvedGenres;
     }
 }
