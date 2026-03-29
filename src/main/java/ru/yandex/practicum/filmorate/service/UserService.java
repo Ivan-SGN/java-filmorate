@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
+import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -14,15 +17,14 @@ import java.util.Collection;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
-    private final UserMapper userMapper;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage, UserMapper userMapper) {
-        this.userStorage = userStorage;
-        this.userMapper = userMapper;
-    }
+    private final UserMapper userMapper;
+    private final FilmMapper filmMapper;
 
     public UserDto addUser(UserDto userDto) {
         User user = userMapper.map(userDto);
@@ -56,7 +58,6 @@ public class UserService {
         getUserOrThrow(userId);
         userStorage.deleteUser(userId);
         log.info("Deleted user, id: {}", userId);
-
     }
 
     public void addFriend(int userId, int friendId) {
@@ -99,6 +100,15 @@ public class UserService {
         log.info("Get common friends for users {} and {}", userId, otherId);
         return userStorage.getCommonFriends(userId, otherId).stream()
                 .map(userMapper::mapToDto)
+                .toList();
+    }
+
+    public Collection<FilmRsDto> getRecommendations(int userId) {
+        getUserOrThrow(userId);
+        log.info("Get recommendations request for user {}", userId);
+
+        return userStorage.getRecommendations(userId).stream()
+                .map(filmMapper::mapToRsDto)
                 .toList();
     }
 
