@@ -3408,6 +3408,907 @@
       ]
     },
     {
+      "name": "reviews",
+      "item": [
+        {
+          "name": "Review create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const source = JSON.parse(pm.request.body.raw);",
+                  "",
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('Has review create response', function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Test review create fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('reviewId');",
+                  "    pm.expect(jsonData.content).to.eql(source.content);",
+                  "    pm.expect(jsonData.isPositive).to.eql(source.isPositive);",
+                  "    pm.expect(jsonData.userId).to.eql(source.userId);",
+                  "    pm.expect(jsonData.filmId).to.eql(source.filmId);",
+                  "    pm.expect(jsonData.useful).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const user = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = {",
+                  "            content: rnd.getWord(40),",
+                  "            isPositive: true,",
+                  "            userId: user.id,",
+                  "            filmId: film.id",
+                  "        };",
+                  "",
+                  "        pm.request.body.update({",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify(review),",
+                  "            options: { raw: { language: 'json' } }",
+                  "        });",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare review create data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const source = JSON.parse(pm.request.body.raw);",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.be.ok;",
+                  "});",
+                  "pm.test('Has review update response', function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Test review update fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.reviewId).to.eql(source.reviewId);",
+                  "    pm.expect(jsonData.content).to.eql(source.content);",
+                  "    pm.expect(jsonData.isPositive).to.eql(source.isPositive);",
+                  "    pm.expect(jsonData.userId).to.eql(source.userId);",
+                  "    pm.expect(jsonData.filmId).to.eql(source.filmId);",
+                  "    pm.expect(jsonData.useful).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const user = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const createdReview = await api.post('/reviews', {",
+                  "            content: rnd.getWord(30),",
+                  "            isPositive: true,",
+                  "            userId: user.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "        const updatedReview = {",
+                  "            reviewId: createdReview.reviewId,",
+                  "            content: 'Updated ' + rnd.getWord(20),",
+                  "            isPositive: false,",
+                  "            userId: user.id,",
+                  "            filmId: film.id",
+                  "        };",
+                  "",
+                  "        pm.collectionVariables.set('review_id', createdReview.reviewId);",
+                  "        pm.request.body.update({",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify(updatedReview),",
+                  "            options: { raw: { language: 'json' } }",
+                  "        });",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare review update data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review delete",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const user = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = await api.post('/reviews', {",
+                  "            content: rnd.getWord(35),",
+                  "            isPositive: true,",
+                  "            userId: user.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_id', review.reviewId);",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare review delete data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const reviewId = pm.collectionVariables.get('review_id');",
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "",
+                  "pm.test('Status code is 200 or 204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/reviews/' + reviewId,",
+                  "    method: 'GET',",
+                  "    header: { 'Content-Type': 'application/json' }",
+                  "}, (error, response) => {",
+                  "    pm.test('Deleted review should not exist', function () {",
+                  "        pm.expect(response.code).to.eql(404);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/{{review_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "{{review_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review get by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const source = JSON.parse(pm.collectionVariables.get('review_source'));",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.be.ok;",
+                  "});",
+                  "pm.test('Has review get response', function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Test review fields by id', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.reviewId).to.eql(source.reviewId);",
+                  "    pm.expect(jsonData.content).to.eql(source.content);",
+                  "    pm.expect(jsonData.isPositive).to.eql(source.isPositive);",
+                  "    pm.expect(jsonData.userId).to.eql(source.userId);",
+                  "    pm.expect(jsonData.filmId).to.eql(source.filmId);",
+                  "    pm.expect(jsonData.useful).to.eql(source.useful);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const user = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = await api.post('/reviews', {",
+                  "            content: rnd.getWord(32),",
+                  "            isPositive: true,",
+                  "            userId: user.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_id', review.reviewId);",
+                  "        pm.collectionVariables.set('review_source', JSON.stringify(review));",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare review get-by-id data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/{{review_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "{{review_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reviews get by film",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const firstId = Number(pm.collectionVariables.get('review_first_id'));",
+                  "const secondId = Number(pm.collectionVariables.get('review_second_id'));",
+                  "const filmId = Number(pm.collectionVariables.get('review_film_id'));",
+                  "",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.be.ok;",
+                  "});",
+                  "pm.test('Has reviews list response', function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Reviews are filtered and sorted by useful', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.eql(2);",
+                  "    pm.expect(jsonData[0].reviewId).to.eql(firstId);",
+                  "    pm.expect(jsonData[0].filmId).to.eql(filmId);",
+                  "    pm.expect(jsonData[0].useful).to.eql(1);",
+                  "    pm.expect(jsonData[1].reviewId).to.eql(secondId);",
+                  "    pm.expect(jsonData[1].filmId).to.eql(filmId);",
+                  "    pm.expect(jsonData[1].useful).to.eql(-1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const authorOne = await api.addUser(rnd.getUser());",
+                  "        const authorTwo = await api.addUser(rnd.getUser());",
+                  "        const voter = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const otherFilm = await api.addFilm(rnd.getFilm());",
+                  "",
+                  "        const topReview = await api.post('/reviews', {",
+                  "            content: 'Top ' + rnd.getWord(20),",
+                  "            isPositive: true,",
+                  "            userId: authorOne.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create top review: ');",
+                  "        const lowReview = await api.post('/reviews', {",
+                  "            content: 'Low ' + rnd.getWord(20),",
+                  "            isPositive: false,",
+                  "            userId: authorTwo.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create low review: ');",
+                  "        await api.post('/reviews', {",
+                  "            content: 'Other ' + rnd.getWord(20),",
+                  "            isPositive: true,",
+                  "            userId: authorOne.id,",
+                  "            filmId: otherFilm.id",
+                  "        }, 'Failed to create extra review: ');",
+                  "        await api.put('/reviews/' + topReview.reviewId + '/like/' + voter.id, null, 'Failed to like review: ');",
+                  "        await api.put('/reviews/' + lowReview.reviewId + '/dislike/' + voter.id, null, 'Failed to dislike review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_film_id', film.id);",
+                  "        pm.collectionVariables.set('review_first_id', topReview.reviewId);",
+                  "        pm.collectionVariables.set('review_second_id', lowReview.reviewId);",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare review list data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews?filmId={{review_film_id}}&count=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "filmId",
+                  "value": "{{review_film_id}}"
+                },
+                {
+                  "key": "count",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review add like",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const reviewId = pm.collectionVariables.get('review_id');",
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "",
+                  "pm.test('Status code is 200 or 204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/reviews/' + reviewId,",
+                  "    method: 'GET',",
+                  "    header: { 'Content-Type': 'application/json' }",
+                  "}, (error, response) => {",
+                  "    pm.test('Review useful should be 1 after like', function () {",
+                  "        pm.expect(response.code).to.eql(200);",
+                  "        pm.expect(response.json().useful).to.eql(1);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const author = await api.addUser(rnd.getUser());",
+                  "        const voter = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = await api.post('/reviews', {",
+                  "            content: rnd.getWord(28),",
+                  "            isPositive: true,",
+                  "            userId: author.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_id', review.reviewId);",
+                  "        pm.collectionVariables.set('review_reaction_user_id', voter.id);",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare add-like data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/{{review_id}}/like/{{review_reaction_user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "{{review_id}}",
+                "like",
+                "{{review_reaction_user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review add dislike",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const reviewId = pm.collectionVariables.get('review_id');",
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "",
+                  "pm.test('Status code is 200 or 204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/reviews/' + reviewId,",
+                  "    method: 'GET',",
+                  "    header: { 'Content-Type': 'application/json' }",
+                  "}, (error, response) => {",
+                  "    pm.test('Review useful should be -1 after dislike', function () {",
+                  "        pm.expect(response.code).to.eql(200);",
+                  "        pm.expect(response.json().useful).to.eql(-1);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const author = await api.addUser(rnd.getUser());",
+                  "        const voter = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = await api.post('/reviews', {",
+                  "            content: rnd.getWord(28),",
+                  "            isPositive: true,",
+                  "            userId: author.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_id', review.reviewId);",
+                  "        pm.collectionVariables.set('review_reaction_user_id', voter.id);",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare add-dislike data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/{{review_id}}/dislike/{{review_reaction_user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "{{review_id}}",
+                "dislike",
+                "{{review_reaction_user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review remove like",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const reviewId = pm.collectionVariables.get('review_id');",
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "",
+                  "pm.test('Status code is 200 or 204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/reviews/' + reviewId,",
+                  "    method: 'GET',",
+                  "    header: { 'Content-Type': 'application/json' }",
+                  "}, (error, response) => {",
+                  "    pm.test('Review useful should be 0 after like removal', function () {",
+                  "        pm.expect(response.code).to.eql(200);",
+                  "        pm.expect(response.json().useful).to.eql(0);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const author = await api.addUser(rnd.getUser());",
+                  "        const voter = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = await api.post('/reviews', {",
+                  "            content: rnd.getWord(28),",
+                  "            isPositive: true,",
+                  "            userId: author.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "        await api.put('/reviews/' + review.reviewId + '/like/' + voter.id, null, 'Failed to like review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_id', review.reviewId);",
+                  "        pm.collectionVariables.set('review_reaction_user_id', voter.id);",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare remove-like data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/{{review_id}}/like/{{review_reaction_user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "{{review_id}}",
+                "like",
+                "{{review_reaction_user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review remove dislike",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const reviewId = pm.collectionVariables.get('review_id');",
+                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "",
+                  "pm.test('Status code is 200 or 204', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/reviews/' + reviewId,",
+                  "    method: 'GET',",
+                  "    header: { 'Content-Type': 'application/json' }",
+                  "}, (error, response) => {",
+                  "    pm.test('Review useful should be 0 after dislike removal', function () {",
+                  "        pm.expect(response.code).to.eql(200);",
+                  "        pm.expect(response.json().useful).to.eql(0);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const api = new API(pm);",
+                  "    const rnd = new RandomUtils();",
+                  "",
+                  "    try {",
+                  "        const author = await api.addUser(rnd.getUser());",
+                  "        const voter = await api.addUser(rnd.getUser());",
+                  "        const film = await api.addFilm(rnd.getFilm());",
+                  "        const review = await api.post('/reviews', {",
+                  "            content: rnd.getWord(28),",
+                  "            isPositive: true,",
+                  "            userId: author.id,",
+                  "            filmId: film.id",
+                  "        }, 'Failed to create review: ');",
+                  "        await api.put('/reviews/' + review.reviewId + '/dislike/' + voter.id, null, 'Failed to dislike review: ');",
+                  "",
+                  "        pm.collectionVariables.set('review_id', review.reviewId);",
+                  "        pm.collectionVariables.set('review_reaction_user_id', voter.id);",
+                  "    } catch (err) {",
+                  "        console.error('Failed to prepare remove-dislike data', err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/{{review_id}}/dislike/{{review_reaction_user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "{{review_id}}",
+                "dislike",
+                "{{review_reaction_user_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "MPA",
       "item": [
         {
