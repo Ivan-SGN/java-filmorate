@@ -87,12 +87,18 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     @Override
     public void addReaction(int reviewId, int userId, boolean useful) {
         Boolean currentReaction = findReaction(reviewId, userId);
-        if (currentReaction != null) {
+        if (currentReaction != null && currentReaction == useful) {
             return;
         }
 
         update(UPSERT_REACTION, reviewId, userId, useful);
-        changeUseful(reviewId, useful ? 1 : -1);
+        int delta;
+        if (currentReaction == null) {
+            delta = useful ? 1 : -1;
+        } else {
+            delta = useful ? 2 : -2;
+        }
+        changeUseful(reviewId, delta);
     }
 
     @Override

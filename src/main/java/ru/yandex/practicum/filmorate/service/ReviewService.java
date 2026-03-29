@@ -83,7 +83,6 @@ public class ReviewService {
     public void addLike(int reviewId, int userId) {
         getReviewOrThrow(reviewId);
         getUserOrThrow(userId);
-        validateReactionAbsent(reviewId, userId);
         reviewStorage.addReaction(reviewId, userId, true);
         log.info("User {} liked review {}", userId, reviewId);
     }
@@ -92,7 +91,6 @@ public class ReviewService {
     public void addDislike(int reviewId, int userId) {
         getReviewOrThrow(reviewId);
         getUserOrThrow(userId);
-        validateReactionAbsent(reviewId, userId);
         reviewStorage.addReaction(reviewId, userId, false);
         log.info("User {} disliked review {}", userId, reviewId);
     }
@@ -142,12 +140,6 @@ public class ReviewService {
     private void validateUserAndFilm(int userId, int filmId) {
         getUserOrThrow(userId);
         getFilmOrThrow(filmId);
-    }
-
-    private void validateReactionAbsent(int reviewId, int userId) {
-        if (reviewStorage.getReaction(reviewId, userId).isPresent()) {
-            throw new ValidationException("User already added reaction to this review");
-        }
     }
 
     private void validateReactionForRemoval(int reviewId, int userId, boolean useful) {

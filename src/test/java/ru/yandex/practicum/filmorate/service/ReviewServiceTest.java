@@ -89,18 +89,31 @@ class ReviewServiceTest {
     }
 
     @Test
-    void testAddSecondReactionThrowsValidationException() {
+    void testChangingReactionUpdatesUsefulScore() {
         UserDto author = userService.addUser(createUser("author"));
         UserDto voter = userService.addUser(createUser("voter"));
         int filmId = filmService.addFilm(createFilm("Film")).getId().intValue();
         ReviewDto review = reviewService.addReview(createReview("Review", author.getId().intValue(), filmId, true));
 
         reviewService.addLike(review.getReviewId().intValue(), voter.getId().intValue());
+        reviewService.addDislike(review.getReviewId().intValue(), voter.getId().intValue());
 
-        assertThrows(
-                ValidationException.class,
-                () -> reviewService.addDislike(review.getReviewId().intValue(), voter.getId().intValue())
-        );
+        ReviewDto updated = reviewService.getReview(review.getReviewId().intValue());
+        assertEquals(-1, updated.getUseful());
+    }
+
+    @Test
+    void testAddingSameReactionTwiceDoesNotChangeUsefulScore() {
+        UserDto author = userService.addUser(createUser("author"));
+        UserDto voter = userService.addUser(createUser("voter"));
+        int filmId = filmService.addFilm(createFilm("Film")).getId().intValue();
+        ReviewDto review = reviewService.addReview(createReview("Review", author.getId().intValue(), filmId, true));
+
+        reviewService.addLike(review.getReviewId().intValue(), voter.getId().intValue());
+        reviewService.addLike(review.getReviewId().intValue(), voter.getId().intValue());
+
+        ReviewDto updated = reviewService.getReview(review.getReviewId().intValue());
+        assertEquals(1, updated.getUseful());
     }
 
     @Test

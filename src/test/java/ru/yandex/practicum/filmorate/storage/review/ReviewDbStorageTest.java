@@ -89,11 +89,22 @@ class ReviewDbStorageTest {
     }
 
     @Test
-    void testSecondReactionDoesNotChangeUsefulScore() {
+    void testChangingReactionUpdatesUsefulScore() {
         Review review = reviewStorage.createReview(createReview("Review", author.getId(), film.getId(), true));
 
         reviewStorage.addReaction(review.getReviewId(), voter.getId(), true);
         reviewStorage.addReaction(review.getReviewId(), voter.getId(), false);
+
+        Review updated = reviewStorage.getReview(review.getReviewId()).orElseThrow();
+        assertEquals(-1, updated.getUseful());
+    }
+
+    @Test
+    void testDuplicateReactionDoesNotChangeUsefulScore() {
+        Review review = reviewStorage.createReview(createReview("Review", author.getId(), film.getId(), true));
+
+        reviewStorage.addReaction(review.getReviewId(), voter.getId(), true);
+        reviewStorage.addReaction(review.getReviewId(), voter.getId(), true);
 
         Review updated = reviewStorage.getReview(review.getReviewId()).orElseThrow();
         assertEquals(1, updated.getUseful());
