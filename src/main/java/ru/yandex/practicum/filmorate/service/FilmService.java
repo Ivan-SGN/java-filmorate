@@ -77,7 +77,7 @@ public class FilmService {
     }
 
     public List<FilmRsDto> getPopular(int count, Integer genreId, Year year) {
-        validateGenreFilter(genreId);
+        getGenreOrThrow(genreId);
         return filmStorage.getPopularFilms(count, genreId, year).stream()
                 .map(filmMapper::mapToRsDto)
                 .toList();
@@ -125,7 +125,7 @@ public class FilmService {
                 });
     }
 
-    private void validateGenreFilter(Integer genreId) {
+    private void getGenreOrThrow(Integer genreId) {
         if (genreId == null) {
             return;
         }
