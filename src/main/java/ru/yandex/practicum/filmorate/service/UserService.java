@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -17,14 +16,21 @@ import java.util.Collection;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
-    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
-
     private final UserMapper userMapper;
     private final FilmMapper filmMapper;
+
+    public UserService(
+            @Qualifier("userDbStorage") UserStorage userStorage,
+            UserMapper userMapper,
+            FilmMapper filmMapper
+    ) {
+        this.userStorage = userStorage;
+        this.userMapper = userMapper;
+        this.filmMapper = filmMapper;
+    }
 
     public UserDto addUser(UserDto userDto) {
         User user = userMapper.map(userDto);
