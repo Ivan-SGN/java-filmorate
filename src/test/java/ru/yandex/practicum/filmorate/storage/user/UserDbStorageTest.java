@@ -159,6 +159,24 @@ public class UserDbStorageTest {
         assertTrue(recommendations.isEmpty());
     }
 
+    @Test
+    void testGetRecommendationsEmptyWhenLikesAreIdentical() {
+        User user2 = userStorage.createUser(createUser("login2"));
+
+        long filmId1 = insertFilm("Film 1", "Desc 1", "2020-01-01", 100, 1);
+        long filmId2 = insertFilm("Film 2", "Desc 2", "2021-01-01", 120, 1);
+
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, testUser.getId());
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId2, testUser.getId());
+
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, user2.getId());
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId2, user2.getId());
+
+        Collection<Film> recommendations = userStorage.getRecommendations(testUser.getId());
+
+        assertTrue(recommendations.isEmpty());
+    }
+
     private User createUser(String login) {
         User user = new User();
         user.setEmail(login + "@mail.com");
