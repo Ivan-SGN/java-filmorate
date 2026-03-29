@@ -1,9 +1,10 @@
 {
   "info": {
-    "_postman_id": "55b5cfe0-39b7-45d1-a9b0-2eb0970aea84",
+    "_postman_id": "6c1ceccd-6f00-4d21-8d78-61f962b0d765",
     "name": "postman",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "38671740"
+    "_exporter_id": "51126962",
+    "_collection_link": "https://go.postman.co/collection/51126962-6c1ceccd-6f00-4d21-8d78-61f962b0d765?source=collection_link"
   },
   "item": [
     {
@@ -555,6 +556,82 @@
               ],
               "path": [
                 "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User get Recommendations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Статус ответа 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"В ответе должен прийти массив\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Фильмы в массиве имеют правильную структуру\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    ",
+                  "    if (jsonData.length > 0) {",
+                  "        var film = jsonData[0];",
+                  "        ",
+                  "        pm.expect(film).to.have.property(\"id\");",
+                  "        pm.expect(film).to.have.property(\"name\");",
+                  "        pm.expect(film).to.have.property(\"description\");",
+                  "        pm.expect(film).to.have.property(\"releaseDate\");",
+                  "        pm.expect(film).to.have.property(\"duration\");",
+                  "        ",
+                  "        pm.expect(film).to.have.property(\"mpa\");",
+                  "        pm.expect(film.mpa).to.have.property(\"id\");",
+                  "        pm.expect(film.mpa).to.have.property(\"name\");",
+                  "        ",
+                  "        pm.expect(film.id).to.be.a('number');",
+                  "        pm.expect(film.name).to.be.a('string');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"dolore ullamco\",\n  \"email\": \"yandex@mail.ru\",\n  \"birthday\": \"2446-08-20\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/1/recommendations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "1",
+                "recommendations"
               ]
             }
           },
