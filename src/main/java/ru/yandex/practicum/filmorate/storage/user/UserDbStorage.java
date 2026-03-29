@@ -41,7 +41,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             "    SELECT l2.user_id FROM film_likes l2 " +
             "    JOIN film_likes l3 ON l2.film_id = l3.film_id " +
             "    WHERE l3.user_id = :userId AND l2.user_id != :userId " +
-            "    GROUP BY l2.user_id ORDER BY COUNT(l2.film_id) DESC LIMIT 1" +
+            "    GROUP BY l2.user_id ORDER BY COUNT(l2.film_id) DESC, l2.user_id ASC LIMIT 1" +
             ") " +
             "AND f.id NOT IN (SELECT film_id FROM film_likes WHERE user_id = :userId)";
 
