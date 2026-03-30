@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -15,6 +16,7 @@ import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 import java.time.Year;
 import java.util.*;
 
+@Transactional
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
