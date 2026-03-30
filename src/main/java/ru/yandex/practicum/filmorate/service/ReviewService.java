@@ -143,10 +143,13 @@ public class ReviewService {
     }
 
     private void validateReactionForRemoval(int reviewId, int userId, boolean useful) {
-        Boolean reaction = reviewStorage.getReaction(reviewId, userId)
-                .orElseThrow(() -> new ValidationException("User has not added reaction to this review"));
+        Boolean reaction = reviewStorage.getReaction(reviewId, userId).orElseThrow(() -> {
+                    log.warn("User {} is not creator of review {}", userId, reviewId);
+                    return new ValidationException("User has not added reaction to this review");
+                });
         if (reaction != useful) {
             String reactionName = useful ? "like" : "dislike";
+            log.warn("User {} has not added {} to review {}", userId, reactionName, reviewId);
             throw new ValidationException("User has not added " + reactionName + " to this review");
         }
     }
