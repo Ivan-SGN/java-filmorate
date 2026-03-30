@@ -90,10 +90,6 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public void saveDirectorsForFilm(int filmId, Collection<Director> directors) {
-        if (directors == null || directors.isEmpty()) {
-            return;
-        }
-
         for (Director director : directors) {
 
             Integer count = jdbc.queryForObject(
@@ -103,11 +99,7 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
             );
 
             if (count == null || count == 0) {
-                jdbc.update(
-                        "INSERT INTO directors (id, name) VALUES (?, ?)",
-                        director.getId(),
-                        director.getName() != null ? director.getName() : "Unknown"
-                );
+                throw new IllegalArgumentException("Director not found: " + director.getId());
             }
 
             jdbc.update(
