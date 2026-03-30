@@ -86,7 +86,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
-        }        return film;
+        }
+        return film;
     }
 
     @Override
