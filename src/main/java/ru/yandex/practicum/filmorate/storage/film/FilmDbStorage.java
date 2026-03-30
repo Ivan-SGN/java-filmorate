@@ -42,6 +42,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             "GROUP BY f.id, m.name " +
             "ORDER BY COUNT(fl.user_id) DESC";
 
+    private static final String GET_POPULAR =
+        "SELECT f.*, m.name AS mpa_name " +
+            "FROM films f " +
+            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+            "LEFT JOIN (" +
+            "SELECT film_id, COUNT(*) AS likes_count " +
+            "FROM film_likes GROUP BY film_id" +
+            ") l ON f.id = l.film_id ";
+
     private final GenreStorage genreStorage;
     private final NamedParameterJdbcTemplate namedJdbc;
 
@@ -128,39 +137,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(int count, Integer genreId, Year year) {
-        StringBuilder sql = new StringBuilder(
-            "SELECT f.*, m.name AS mpa_name " +
-                "FROM films f " +
-                "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-                "LEFT JOIN (" +
-                "SELECT film_id, COUNT(*) AS likes_count " +
-                "FROM film_likes GROUP BY film_id" +
-                ") l ON f.id = l.film_id "
-        );
         MapSqlParameterSource params = new MapSqlParameterSource();
-        List<String> conditions = new ArrayList<>();
-
-        if (genreId != null) {
-            sql.append("LEFT JOIN film_genres fg ON f.id = fg.film_id ");
-            conditions.add("fg.genre_id = :genreId");
-            params.addValue("genreId", genreId);
-        }
-
-        if (year != null) {
-            conditions.add("EXTRACT(YEAR FROM f.release_date) = :year");
-            params.addValue("year", year.getValue());
-        }
-
-        if (!conditions.isEmpty()) {
-            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
-        }
-
-        sql.append("ORDER BY COALESCE(l.likes_count, 0) DESC, f.id ");
-        sql.append("LIMIT :count");
-
         params.addValue("count", count);
 
-        List<Film> films = namedJdbc.query(sql.toString(), params, mapper);
+        String query = buildPopularFilmsQuery(genreId, year, params);
+
+        List<Film> films = namedJdbc.query(query, params, mapper);
+        if (films.isEmpty()) {
+            return films;
+        }
 
         enrichFilmsWithGenres(films);
         return films;
@@ -177,5 +162,29 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         for (Film film : films) {
             film.setGenres(genres.getOrDefault(film.getId(), Set.of()));
         }
+    }
+
+    private String buildPopularFilmsQuery(Integer genreId, Year year, MapSqlParameterSource params) {
+        StringBuilder sql = new StringBuilder(GET_POPULAR);
+        List<String> conditions = new ArrayList<>();
+
+        if (genreId != null) {
+            sql.append("JOIN film_genres fg ON f.id = fg.film_id AND fg.genre_id = :genreId ");
+            params.addValue("genreId", genreId);
+        }
+
+        if (year != null) {
+            conditions.add("EXTRACT(YEAR FROM f.release_date) = :year");
+            params.addValue("year", year.getValue());
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
+        }
+
+        sql.append("ORDER BY COALESCE(l.likes_count, 0) DESC, f.id ");
+        sql.append("LIMIT :count");
+
+        return sql.toString();
     }
 }

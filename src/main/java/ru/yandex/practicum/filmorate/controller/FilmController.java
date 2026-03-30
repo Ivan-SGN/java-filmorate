@@ -57,7 +57,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     public Collection<FilmRsDto> getPopular(
-            @RequestParam(defaultValue = "10") @Positive Integer count,
+            @RequestParam(defaultValue = "10") @Positive int count,
             @RequestParam(required = false) @Positive Integer genreId,
             @RequestParam(required = false) Year year
     ) {
