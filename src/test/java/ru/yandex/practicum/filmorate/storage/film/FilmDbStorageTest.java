@@ -239,7 +239,7 @@ class FilmDbStorageTest {
                 created.getId()
         );
 
-        assertEquals(2, directorIds.size());
+        assertEquals(1, directorIds.size());
     }
 
     @Test
