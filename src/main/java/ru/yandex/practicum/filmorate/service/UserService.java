@@ -3,9 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
-import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -20,16 +18,10 @@ public class UserService {
 
     private final UserStorage userStorage;
     private final UserMapper userMapper;
-    private final FilmMapper filmMapper;
 
-    public UserService(
-            @Qualifier("userDbStorage") UserStorage userStorage,
-            UserMapper userMapper,
-            FilmMapper filmMapper
-    ) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage, UserMapper userMapper) {
         this.userStorage = userStorage;
         this.userMapper = userMapper;
-        this.filmMapper = filmMapper;
     }
 
     public UserDto addUser(UserDto userDto) {
@@ -64,6 +56,7 @@ public class UserService {
         getUserOrThrow(userId);
         userStorage.deleteUser(userId);
         log.info("Deleted user, id: {}", userId);
+
     }
 
     public void addFriend(int userId, int friendId) {
@@ -106,15 +99,6 @@ public class UserService {
         log.info("Get common friends for users {} and {}", userId, otherId);
         return userStorage.getCommonFriends(userId, otherId).stream()
                 .map(userMapper::mapToDto)
-                .toList();
-    }
-
-    public Collection<FilmRsDto> getRecommendations(int userId) {
-        getUserOrThrow(userId);
-        log.info("Get recommendations request for user {}", userId);
-
-        return userStorage.getRecommendations(userId).stream()
-                .map(filmMapper::mapToRsDto)
                 .toList();
     }
 
