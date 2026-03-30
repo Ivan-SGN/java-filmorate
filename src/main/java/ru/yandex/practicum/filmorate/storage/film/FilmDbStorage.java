@@ -130,8 +130,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         );
         genreStorage.deleteGenresFromFilm(film.getId());
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
-        directorStorage.deleteDirectorsFromFilm(film.getId());
-        directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
+        if (film.getDirectors() != null) {
+            directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
+        }
         return Optional.of(film);
     }
 

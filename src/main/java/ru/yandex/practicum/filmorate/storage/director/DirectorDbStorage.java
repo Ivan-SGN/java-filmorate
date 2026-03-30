@@ -92,22 +92,19 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
     public void saveDirectorsForFilm(int filmId, Collection<Director> directors) {
         for (Director director : directors) {
 
-            // 1. Проверяем существование
+            // проверяем, что директор существует
             Integer count = jdbc.queryForObject(
                     "SELECT COUNT(*) FROM directors WHERE id = ?",
                     Integer.class,
                     director.getId()
             );
 
-            // 2. Если нет — создаём
             if (count == null || count == 0) {
-                String insertDirector = "INSERT INTO directors (id, name) VALUES (?, ?)";
-                jdbc.update(insertDirector, director.getId(), director.getName());
+                throw new IllegalArgumentException("Director not found: " + director.getId());
             }
 
-            // 3. Создаём связь
             jdbc.update(
-                    "INSERT INTO film_directors (film_id, director_id) VALUES (?, ?)",
+                    INSERT_FILM_DIRECTOR,
                     filmId,
                     director.getId()
             );
