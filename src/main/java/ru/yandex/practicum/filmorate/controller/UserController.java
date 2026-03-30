@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -67,6 +68,11 @@ public class UserController {
     @GetMapping("/{userId}/friends/common/{otherId}")
     public Collection<UserDto> getCommonFriends(@PathVariable @Positive int userId, @PathVariable @Positive int otherId) {
         return userService.getCommonFriends(userId, otherId);
+    }
+
+    @GetMapping("/{userId}/recommendations")
+    public Collection<FilmRsDto> getRecommendations(@PathVariable @Positive int userId) {
+        return userService.getRecommendations(userId);
     }
 
     private void validateUpdateId(Long id, String entityName) {
