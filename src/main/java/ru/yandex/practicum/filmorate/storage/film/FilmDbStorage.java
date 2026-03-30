@@ -84,8 +84,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         );
         film.setId((int) id);
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
-        directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
-        return film;
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
+        }        return film;
     }
 
     @Override
@@ -121,6 +122,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public Optional<Film> updateFilm(Film film) {
         Integer mpaId = film.getMpa() != null ? film.getMpa().getId() : null;
+
         update(
                 UPDATE,
                 film.getName(),
@@ -130,11 +132,17 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 mpaId,
                 film.getId()
         );
+
+        // жанры
         genreStorage.deleteGenresFromFilm(film.getId());
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
-        if (film.getDirectors() != null) {
+
+        directorStorage.deleteDirectorsFromFilm(film.getId());
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
         }
+
         return Optional.of(film);
     }
 
