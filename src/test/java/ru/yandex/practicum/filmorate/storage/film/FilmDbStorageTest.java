@@ -3,14 +3,15 @@ package ru.yandex.practicum.filmorate.storage.film;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
 import java.time.LocalDate;
 import java.time.Year;
@@ -18,6 +19,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
 @AutoConfigureTestDatabase
@@ -27,12 +30,14 @@ class FilmDbStorageTest {
 
     private final FilmStorage filmStorage;
     private final JdbcTemplate jdbc;
+    private final DirectorStorage directorStorage;
     private Film testFilm;
 
     @BeforeEach
     void setUp() {
         testFilm = createFilm();
         testFilm = filmStorage.createFilm(testFilm);
+
         jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (1,'test@mail.com','login','name','1990-01-01')");
     }
 
@@ -191,6 +196,86 @@ class FilmDbStorageTest {
         assertEquals(2, common.size());
         assertEquals(testFilm.getId(), common.get(0).getId());
         assertEquals(secondFilm.getId(), common.get(1).getId());
+    }
+
+    @Test
+    void testCreateFilmWithDirectors() {
+        Film film = createFilm();
+
+        // добавляем режиссёров
+        Director d1 = directorStorage.create(new Director(1, "name1"));
+        Director d2 = directorStorage.create(new Director(2, "name2"));
+
+        film.setDirectors(Set.of(d1, d2));
+
+        Film created = filmStorage.createFilm(film);
+
+        List<Integer> directorIds = jdbc.queryForList(
+                "SELECT director_id FROM film_directors WHERE film_id = ?",
+                Integer.class,
+                created.getId()
+        );
+
+        assertEquals(2, directorIds.size());
+    }
+
+    @Test
+    void testUpdateFilmDirectors() {
+        Film film = createFilm();
+        Director d1 = directorStorage.create(new Director(1, "name1"));
+        film.setDirectors(Set.of(d1));
+
+        Film created = filmStorage.createFilm(film);
+
+        // обновляем режиссёров
+        Director d2 = directorStorage.create(new Director(2, "name2"));
+        created.setDirectors(Set.of(d2));
+
+        filmStorage.updateFilm(created);
+
+        List<Integer> directorIds = jdbc.queryForList(
+                "SELECT director_id FROM film_directors WHERE film_id = ?",
+                Integer.class,
+                created.getId()
+        );
+
+        assertEquals(1, directorIds.size());
+    }
+
+    @Test
+    void testGetFilmWithDirectors() {
+        Film film = createFilm();
+        Director d1 = directorStorage.create(new Director(1, "name1"));
+        Director d2 = directorStorage.create(new Director(2, "name2"));
+
+        film.setDirectors(Set.of(d1, d2));
+        Film created = filmStorage.createFilm(film);
+
+        Optional<Film> found = filmStorage.getFilm(created.getId());
+
+        assertTrue(found.isPresent());
+        assertEquals(2, found.get().getDirectors().size());
+    }
+
+    @Test
+    void testDeleteFilmCascadeDirectors() {
+        Film film = createFilm();
+        Director d1 = directorStorage.create(new Director(1, "name1"));
+
+
+        film.setDirectors(Set.of(d1));
+
+        Film created = filmStorage.createFilm(film);
+
+        filmStorage.deleteFilm(created.getId());
+
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM film_directors WHERE film_id = ?",
+                Integer.class,
+                created.getId()
+        );
+
+        assertEquals(0, count);
     }
 
     private Film createFilm() {

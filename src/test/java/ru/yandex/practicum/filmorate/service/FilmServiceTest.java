@@ -196,10 +196,10 @@ class FilmServiceTest {
 
         FilmRsDto film1 = filmService.addFilm(createFilm("Film1").setGenres(orderedGenreIds(1L)));
         FilmRsDto film2 = filmService.addFilm(
-            createFilm("Film2").setGenres(orderedGenreIds(2L)).setReleaseDate(LocalDate.of(2001, 1, 1))
+                createFilm("Film2").setGenres(orderedGenreIds(2L)).setReleaseDate(LocalDate.of(2001, 1, 1))
         );
         FilmRsDto film3 = filmService.addFilm(
-            createFilm("Film3").setGenres(orderedGenreIds(1L)).setReleaseDate(LocalDate.of(2002, 1, 1))
+                createFilm("Film3").setGenres(orderedGenreIds(1L)).setReleaseDate(LocalDate.of(2002, 1, 1))
         );
 
         filmService.addLike(film1.getId().intValue(), user.getId().intValue());

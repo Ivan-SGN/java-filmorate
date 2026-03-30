@@ -69,6 +69,14 @@ public class FilmController {
         return filmService.getCommon(userId, friendId);
     }
 
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmRsDto> getFilmsByDirector(
+            @PathVariable @Positive int directorId,
+            @RequestParam(defaultValue = "likes") String sortBy
+    ) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
     @DeleteMapping("/{filmId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFilm(@PathVariable @Positive int filmId) {

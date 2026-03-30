@@ -176,4 +176,10 @@ public class FilmService {
             throw new NotFoundException("Genres not found: " + missingGenreIds);
         }
     }
+
+    public List<FilmRsDto> getFilmsByDirector(int directorId, String sortBy) {
+        return filmStorage.getFilmsByDirector(directorId, sortBy).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
 }

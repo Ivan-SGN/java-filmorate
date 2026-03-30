@@ -32,4 +32,6 @@ public class FilmRqDto {
     private IdDto mpa;
 
     private Set<@Valid IdDto> genres = new LinkedHashSet<>();
+
+    private Set<@Valid IdDto> directors = new LinkedHashSet<>();
 }

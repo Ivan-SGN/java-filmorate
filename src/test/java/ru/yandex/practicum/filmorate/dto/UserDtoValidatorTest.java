@@ -2,11 +2,7 @@ package ru.yandex.practicum.filmorate.dto;
 
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,6 +27,84 @@ class UserDtoValidatorTest {
             Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC);
 
     private Validator validator;
+
+    private static UserDto validUserDto() {
+        var dto = new UserDto();
+        dto.setEmail("a@b.com");
+        dto.setLogin("john");
+        dto.setName("John");
+        dto.setBirthday(LocalDate.of(2000, 1, 1));
+        return dto;
+    }
+
+    private static Set<Class<? extends Annotation>> constraintTypesFor(
+            Set<jakarta.validation.ConstraintViolation<UserDto>> violations,
+            String property
+    ) {
+        return violations.stream()
+                .filter(v -> v.getPropertyPath().toString().equals(property))
+                .map(v -> v.getConstraintDescriptor().getAnnotation().annotationType())
+                .collect(Collectors.toSet());
+    }
+
+    private static Stream<Arguments> invalidEmails() {
+        return Stream.of(
+                Arguments.of(null, Set.of(NotBlank.class)),
+                Arguments.of("", Set.of(NotBlank.class)),
+                Arguments.of("not-an-email", Set.of(Email.class)),
+                Arguments.of("a b@c.com", Set.of(Email.class))
+        );
+    }
+
+    private static Stream<Arguments> validEmails() {
+        return Stream.of(
+                Arguments.of("a@b.com"),
+                Arguments.of("user.name+tag@domain.co")
+        );
+    }
+
+    private static Stream<Arguments> invalidLogins() {
+        return Stream.of(
+                Arguments.of(null, Set.of(NotBlank.class)),
+                Arguments.of("", Set.of(NotBlank.class, Pattern.class)),
+                Arguments.of(" ", Set.of(NotBlank.class, Pattern.class)),
+                Arguments.of("john doe", Set.of(Pattern.class)),
+                Arguments.of("john\tdoe", Set.of(Pattern.class)),
+                Arguments.of("john\ndoe", Set.of(Pattern.class))
+        );
+    }
+
+    private static Stream<Arguments> validLogins() {
+        return Stream.of(
+                Arguments.of("john"),
+                Arguments.of("john_doe"),
+                Arguments.of("john.doe+123")
+        );
+    }
+
+    private static Stream<Arguments> invalidBirthdays() {
+        return Stream.of(
+                Arguments.of(null, Set.of(NotNull.class)),
+                Arguments.of(TODAY.plusDays(1), Set.of(PastOrPresent.class))
+        );
+    }
+
+    private static Stream<Arguments> validBirthdays() {
+        return Stream.of(
+                Arguments.of(TODAY.minusDays(1)),
+                Arguments.of(TODAY),
+                Arguments.of(LocalDate.of(1900, 1, 1))
+        );
+    }
+
+    private static Stream<Arguments> validNames() {
+        return Stream.of(
+                Arguments.of((String) null),
+                Arguments.of(""),
+                Arguments.of(" "),
+                Arguments.of("John Doe")
+        );
+    }
 
     @BeforeEach
     void setUp() {
@@ -120,83 +194,5 @@ class UserDtoValidatorTest {
         dto.setName(name);
 
         assertThat(validator.validate(dto)).isEmpty();
-    }
-
-    private static UserDto validUserDto() {
-        var dto = new UserDto();
-        dto.setEmail("a@b.com");
-        dto.setLogin("john");
-        dto.setName("John");
-        dto.setBirthday(LocalDate.of(2000, 1, 1));
-        return dto;
-    }
-
-    private static Set<Class<? extends Annotation>> constraintTypesFor(
-            Set<jakarta.validation.ConstraintViolation<UserDto>> violations,
-            String property
-    ) {
-        return violations.stream()
-                .filter(v -> v.getPropertyPath().toString().equals(property))
-                .map(v -> v.getConstraintDescriptor().getAnnotation().annotationType())
-                .collect(Collectors.toSet());
-    }
-
-    private static Stream<Arguments> invalidEmails() {
-        return Stream.of(
-                Arguments.of(null, Set.of(NotBlank.class)),
-                Arguments.of("", Set.of(NotBlank.class)),
-                Arguments.of("not-an-email", Set.of(Email.class)),
-                Arguments.of("a b@c.com", Set.of(Email.class))
-        );
-    }
-
-    private static Stream<Arguments> validEmails() {
-        return Stream.of(
-                Arguments.of("a@b.com"),
-                Arguments.of("user.name+tag@domain.co")
-        );
-    }
-
-    private static Stream<Arguments> invalidLogins() {
-        return Stream.of(
-                Arguments.of(null, Set.of(NotBlank.class)),
-                Arguments.of("", Set.of(NotBlank.class, Pattern.class)),
-                Arguments.of(" ", Set.of(NotBlank.class, Pattern.class)),
-                Arguments.of("john doe", Set.of(Pattern.class)),
-                Arguments.of("john\tdoe", Set.of(Pattern.class)),
-                Arguments.of("john\ndoe", Set.of(Pattern.class))
-        );
-    }
-
-    private static Stream<Arguments> validLogins() {
-        return Stream.of(
-                Arguments.of("john"),
-                Arguments.of("john_doe"),
-                Arguments.of("john.doe+123")
-        );
-    }
-
-    private static Stream<Arguments> invalidBirthdays() {
-        return Stream.of(
-                Arguments.of(null, Set.of(NotNull.class)),
-                Arguments.of(TODAY.plusDays(1), Set.of(PastOrPresent.class))
-        );
-    }
-
-    private static Stream<Arguments> validBirthdays() {
-        return Stream.of(
-                Arguments.of(TODAY.minusDays(1)),
-                Arguments.of(TODAY),
-                Arguments.of(LocalDate.of(1900, 1, 1))
-        );
-    }
-
-    private static Stream<Arguments> validNames() {
-        return Stream.of(
-                Arguments.of((String) null),
-                Arguments.of(""),
-                Arguments.of(" "),
-                Arguments.of("John Doe")
-        );
     }
 }

@@ -2,17 +2,13 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
-import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.storage.mappers.UserRowMapper;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -30,26 +26,12 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
     private static final String GET_COMMON_FRIENDS =
             "SELECT u.* FROM users u " +
-            "JOIN friends f1 ON u.id = f1.friend_id " +
-            "JOIN friends f2 ON u.id = f2.friend_id " +
-            "WHERE f1.user_id = ? AND f2.user_id = ?";
-    private static final String GET_RECOMMENDATIONS =
-            "SELECT f.*, m.name AS mpa_name FROM films f " +
-            "JOIN mpa m ON f.mpa_id = m.id " +
-            "JOIN film_likes l1 ON f.id = l1.film_id " +
-            "WHERE l1.user_id = (" +
-            "    SELECT l2.user_id FROM film_likes l2 " +
-            "    JOIN film_likes l3 ON l2.film_id = l3.film_id " +
-            "    WHERE l3.user_id = :userId AND l2.user_id != :userId " +
-            "    GROUP BY l2.user_id ORDER BY COUNT(l2.film_id) DESC, l2.user_id ASC LIMIT 1" +
-            ") " +
-            "AND f.id NOT IN (SELECT film_id FROM film_likes WHERE user_id = :userId)";
+                    "JOIN friends f1 ON u.id = f1.friend_id " +
+                    "JOIN friends f2 ON u.id = f2.friend_id " +
+                    "WHERE f1.user_id = ? AND f2.user_id = ?";
 
-    private final NamedParameterJdbcTemplate namedJdbc;
-
-    public UserDbStorage(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
+    public UserDbStorage(JdbcTemplate jdbc) {
         super(jdbc, new UserRowMapper());
-        this.namedJdbc = namedJdbc;
     }
 
     @Override
@@ -111,12 +93,5 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     @Override
     public Collection<User> getCommonFriends(int userId, int otherId) {
         return jdbc.query(GET_COMMON_FRIENDS, mapper, userId, otherId);
-    }
-
-    @Override
-    public Collection<Film> getRecommendations(int userId) {
-        var params = Map.of("userId", userId);
-
-        return namedJdbc.query(GET_RECOMMENDATIONS, params, new FilmRowMapper());
     }
 }
