@@ -3,14 +3,11 @@ package ru.yandex.practicum.filmorate.storage.director;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 import ru.yandex.practicum.filmorate.storage.mappers.DirectorRowMapper;
 
-import java.sql.PreparedStatement;
 import java.util.*;
 
 @Repository
@@ -23,8 +20,8 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     private static final String DELETE_DIRECTOR = "DELETE FROM directors WHERE id = ?";
 
-    private static final String INSERT_FILM_DIRECTOR ="INSERT INTO film_directors(film_id, director_id) VALUES (?, ?)";
-    private static final String DELETE_FILM_DIRECTORS ="DELETE FROM film_directors WHERE film_id = ?";
+    private static final String INSERT_FILM_DIRECTOR = "INSERT INTO film_directors(film_id, director_id) VALUES (?, ?)";
+    private static final String DELETE_FILM_DIRECTORS = "DELETE FROM film_directors WHERE film_id = ?";
 
     private static final String FIND_BY_FILM_IDS =
             "SELECT fd.film_id, d.* " +

@@ -26,6 +26,103 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FilmDtoValidatorTest {
     private Validator validator;
 
+    private static FilmRqDto validFilmRqDto() {
+        var dto = new FilmRqDto();
+        dto.setId(1L);
+        dto.setName("Inception");
+        dto.setDescription("A valid description");
+        dto.setReleaseDate(LocalDate.of(2010, 7, 16));
+        dto.setDuration(148);
+        dto.setMpa(new IdDto().setId(3L));
+        dto.setGenres(Set.of(new IdDto().setId(1L), new IdDto().setId(4L)));
+        return dto;
+    }
+
+    private static Set<Class<? extends Annotation>> constraintTypesFor(
+            Set<jakarta.validation.ConstraintViolation<FilmRqDto>> violations,
+            String property
+    ) {
+        return violations.stream()
+                .filter(v -> v.getPropertyPath().toString().equals(property))
+                .map(v -> v.getConstraintDescriptor().getAnnotation().annotationType())
+                .collect(Collectors.toSet());
+    }
+
+    private static Stream<Arguments> invalidNames() {
+        return Stream.of(
+                Arguments.of(null, Set.of(NotBlank.class)),
+                Arguments.of("", Set.of(NotBlank.class)),
+                Arguments.of(" ", Set.of(NotBlank.class))
+        );
+    }
+
+    private static Stream<Arguments> validNames() {
+        return Stream.of(
+                Arguments.of("Film")
+        );
+    }
+
+    private static Stream<Arguments> invalidDescriptions() {
+        return Stream.of(
+                Arguments.of("a".repeat(201))
+        );
+    }
+
+    private static Stream<Arguments> validDescriptions() {
+        return Stream.of(
+                Arguments.of((String) null),
+                Arguments.of(""),
+                Arguments.of("a".repeat(200))
+        );
+    }
+
+    private static Stream<Arguments> invalidReleaseDates() {
+        return Stream.of(
+                Arguments.of(null, Set.of(NotNull.class)),
+                Arguments.of(LocalDate.of(1895, 12, 27), Set.of(After.class)),
+                Arguments.of(LocalDate.of(1800, 1, 1), Set.of(After.class))
+        );
+    }
+
+    private static Stream<Arguments> validReleaseDates() {
+        return Stream.of(
+                Arguments.of(LocalDate.of(1895, 12, 28)),
+                Arguments.of(LocalDate.of(2000, 1, 1))
+        );
+    }
+
+    private static Stream<Arguments> invalidDurations() {
+        return Stream.of(
+                Arguments.of(null, Set.of(NotNull.class)),
+                Arguments.of(0, Set.of(Positive.class)),
+                Arguments.of(-1, Set.of(Positive.class)),
+                Arguments.of(Integer.MIN_VALUE, Set.of(Positive.class))
+        );
+    }
+
+    private static Stream<Arguments> validDurations() {
+        return Stream.of(
+                Arguments.of(1),
+                Arguments.of(120)
+        );
+    }
+
+    private static Stream<Arguments> validContentRatings() {
+        return Stream.of(
+                Arguments.of(1L),
+                Arguments.of(5L)
+        );
+    }
+
+    private static Stream<Arguments> validIds() {
+        return Stream.of(
+                Arguments.of((Long) null),
+                Arguments.of(0L),
+                Arguments.of(-1L),
+                Arguments.of(1L)
+        );
+    }
+
     @BeforeEach
     void setUp() {
         validator = Validation.buildDefaultValidatorFactory().getValidator();
@@ -141,102 +238,5 @@ class FilmDtoValidatorTest {
         dto.setId(id);
 
         assertThat(validator.validate(dto)).isEmpty();
-    }
-
-    private static FilmRqDto validFilmRqDto() {
-        var dto = new FilmRqDto();
-        dto.setId(1L);
-        dto.setName("Inception");
-        dto.setDescription("A valid description");
-        dto.setReleaseDate(LocalDate.of(2010, 7, 16));
-        dto.setDuration(148);
-        dto.setMpa(new IdDto().setId(3L));
-        dto.setGenres(Set.of(new IdDto().setId(1L), new IdDto().setId(4L)));
-        return dto;
-    }
-
-    private static Set<Class<? extends Annotation>> constraintTypesFor(
-            Set<jakarta.validation.ConstraintViolation<FilmRqDto>> violations,
-            String property
-    ) {
-        return violations.stream()
-                .filter(v -> v.getPropertyPath().toString().equals(property))
-                .map(v -> v.getConstraintDescriptor().getAnnotation().annotationType())
-                .collect(Collectors.toSet());
-    }
-
-    private static Stream<Arguments> invalidNames() {
-        return Stream.of(
-                Arguments.of(null, Set.of(NotBlank.class)),
-                Arguments.of("", Set.of(NotBlank.class)),
-                Arguments.of(" ", Set.of(NotBlank.class))
-        );
-    }
-
-    private static Stream<Arguments> validNames() {
-        return Stream.of(
-                Arguments.of("Film")
-        );
-    }
-
-    private static Stream<Arguments> invalidDescriptions() {
-        return Stream.of(
-                Arguments.of("a".repeat(201))
-        );
-    }
-
-    private static Stream<Arguments> validDescriptions() {
-        return Stream.of(
-                Arguments.of((String) null),
-                Arguments.of(""),
-                Arguments.of("a".repeat(200))
-        );
-    }
-
-    private static Stream<Arguments> invalidReleaseDates() {
-        return Stream.of(
-                Arguments.of(null, Set.of(NotNull.class)),
-                Arguments.of(LocalDate.of(1895, 12, 27), Set.of(After.class)),
-                Arguments.of(LocalDate.of(1800, 1, 1), Set.of(After.class))
-        );
-    }
-
-    private static Stream<Arguments> validReleaseDates() {
-        return Stream.of(
-                Arguments.of(LocalDate.of(1895, 12, 28)),
-                Arguments.of(LocalDate.of(2000, 1, 1))
-        );
-    }
-
-    private static Stream<Arguments> invalidDurations() {
-        return Stream.of(
-                Arguments.of(null, Set.of(NotNull.class)),
-                Arguments.of(0, Set.of(Positive.class)),
-                Arguments.of(-1, Set.of(Positive.class)),
-                Arguments.of(Integer.MIN_VALUE, Set.of(Positive.class))
-        );
-    }
-
-    private static Stream<Arguments> validDurations() {
-        return Stream.of(
-                Arguments.of(1),
-                Arguments.of(120)
-        );
-    }
-
-    private static Stream<Arguments> validContentRatings() {
-        return Stream.of(
-                Arguments.of(1L),
-                Arguments.of(5L)
-        );
-    }
-
-    private static Stream<Arguments> validIds() {
-        return Stream.of(
-                Arguments.of((Long) null),
-                Arguments.of(0L),
-                Arguments.of(-1L),
-                Arguments.of(1L)
-        );
     }
 }

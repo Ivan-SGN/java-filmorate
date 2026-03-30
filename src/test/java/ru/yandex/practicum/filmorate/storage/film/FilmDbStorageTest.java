@@ -200,8 +200,8 @@ class FilmDbStorageTest {
         Film film = createFilm();
 
         // добавляем режиссёров
-        String name1 ="name1";
-        String name2 ="name2";
+        String name1 = "name1";
+        String name2 = "name2";
         film.setDirectors(Set.of(
                 createDirector(1, name1),
                 createDirector(2, name2)
@@ -222,13 +222,13 @@ class FilmDbStorageTest {
     @Test
     void testUpdateFilmDirectors() {
         Film film = createFilm();
-        String name1 ="name1";
+        String name1 = "name1";
         film.setDirectors(Set.of(createDirector(1, name1)));
 
         Film created = filmStorage.createFilm(film);
 
         // обновляем режиссёров
-        String name2 ="name2";
+        String name2 = "name2";
         created.setDirectors(Set.of(createDirector(2, name2)));
 
         filmStorage.updateFilm(created);
@@ -246,8 +246,8 @@ class FilmDbStorageTest {
     @Test
     void testGetFilmWithDirectors() {
         Film film = createFilm();
-        String name1 ="name1";
-        String name2 ="name2";
+        String name1 = "name1";
+        String name2 = "name2";
         film.setDirectors(Set.of(createDirector(1, name1), createDirector(2, name2)));
 
         Film created = filmStorage.createFilm(film);
@@ -261,7 +261,7 @@ class FilmDbStorageTest {
     @Test
     void testDeleteFilmCascadeDirectors() {
         Film film = createFilm();
-        String name1 ="name1";
+        String name1 = "name1";
         film.setDirectors(Set.of(createDirector(1, name1)));
 
         Film created = filmStorage.createFilm(film);

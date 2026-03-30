@@ -26,9 +26,9 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
     private static final String GET_COMMON_FRIENDS =
             "SELECT u.* FROM users u " +
-            "JOIN friends f1 ON u.id = f1.friend_id " +
-            "JOIN friends f2 ON u.id = f2.friend_id " +
-            "WHERE f1.user_id = ? AND f2.user_id = ?";
+                    "JOIN friends f1 ON u.id = f1.friend_id " +
+                    "JOIN friends f2 ON u.id = f2.friend_id " +
+                    "WHERE f1.user_id = ? AND f2.user_id = ?";
 
     public UserDbStorage(JdbcTemplate jdbc) {
         super(jdbc, new UserRowMapper());

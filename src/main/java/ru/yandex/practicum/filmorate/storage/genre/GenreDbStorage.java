@@ -21,10 +21,10 @@ public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorag
 
     private static final String FIND_BY_FILM_IDS =
             "SELECT fg.film_id, g.* " +
-            "FROM film_genres fg " +
-            "JOIN genres g ON g.id = fg.genre_id " +
-            "WHERE fg.film_id IN (:ids) " +
-            "ORDER BY g.id";
+                    "FROM film_genres fg " +
+                    "JOIN genres g ON g.id = fg.genre_id " +
+                    "WHERE fg.film_id IN (:ids) " +
+                    "ORDER BY g.id";
 
 
     private final NamedParameterJdbcTemplate namedJdbc;
