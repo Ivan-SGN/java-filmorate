@@ -261,10 +261,14 @@ class FilmServiceTest {
     }
 
     private UserDto createUser() {
+        return createUser("login");
+    }
+
+    private UserDto createUser(String login) {
         UserDto user = new UserDto();
-        user.setEmail("test@mail.com");
-        user.setLogin("login");
-        user.setName("name");
+        user.setEmail(login + "@mail.com");
+        user.setLogin(login);
+        user.setName(login);
         user.setBirthday(LocalDate.of(1990, 1, 1));
         return user;
     }

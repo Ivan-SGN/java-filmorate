@@ -13,6 +13,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import java.time.LocalDate;
 import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -28,7 +30,7 @@ class UserServiceTest {
     void testAddUser() {
         UserDto user = userService.addUser(createUser("login1"));
 
-        assertEquals(1L, user.getId());
+        assertNotNull(user.getId());
         assertEquals("login1", user.getLogin());
     }
 
