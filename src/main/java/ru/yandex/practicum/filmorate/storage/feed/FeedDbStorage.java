@@ -10,7 +10,7 @@ import ru.yandex.practicum.filmorate.storage.mappers.FeedEventRowMapper;
 
 import java.util.List;
 
-@Repository("feedDbStorage")
+@Repository
 public class FeedDbStorage extends BaseRepository<FeedEvent> implements FeedStorage {
 
     private static final String INSERT =
