@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.controller.dto.ReviewDto;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.ReviewMapper;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -23,16 +26,19 @@ public class ReviewService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private final ReviewMapper reviewMapper;
+    private final FeedStorage feedStorage;
 
     public ReviewService(
             @Qualifier("reviewDbStorage") ReviewStorage reviewStorage,
             @Qualifier("userDbStorage") UserStorage userStorage,
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
+            @Qualifier("feedDbStorage") FeedStorage feedStorage,
             ReviewMapper reviewMapper
     ) {
         this.reviewStorage = reviewStorage;
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.feedStorage = feedStorage;
         this.reviewMapper = reviewMapper;
     }
 
@@ -42,6 +48,7 @@ public class ReviewService {
         review.setUseful(0);
         validateUserAndFilm(review.getUserId(), review.getFilmId());
         Review createdReview = reviewStorage.createReview(review);
+        feedStorage.addEvent(createdReview.getUserId(), EventType.REVIEW, Operation.ADD, createdReview.getReviewId());
         log.info("Review added: id={}", createdReview.getReviewId());
         return reviewMapper.mapToDto(createdReview);
     }
@@ -54,14 +61,16 @@ public class ReviewService {
         validateUserAndFilm(review.getUserId(), review.getFilmId());
         Review updatedReview = reviewStorage.updateReview(review)
                 .orElseThrow(() -> new IllegalStateException("Review update failed"));
+        feedStorage.addEvent(updatedReview.getUserId(), EventType.REVIEW, Operation.UPDATE, updatedReview.getReviewId());
         log.info("Review updated: id={}", updatedReview.getReviewId());
         return reviewMapper.mapToDto(updatedReview);
     }
 
     @Transactional
     public void deleteReview(int reviewId) {
-        getReviewOrThrow(reviewId);
+        Review review = getReviewOrThrow(reviewId);
         reviewStorage.deleteReview(reviewId);
+        feedStorage.addEvent(review.getUserId(), EventType.REVIEW, Operation.REMOVE, reviewId);
         log.info("Review deleted: id={}", reviewId);
     }
 
