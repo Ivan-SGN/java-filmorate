@@ -98,16 +98,22 @@ public class FilmService {
     public void addLike(int filmId, int userId) {
         getFilmOrThrow(filmId);
         getUserOrThrow(userId);
+        boolean hasLike = filmStorage.hasLike(filmId, userId);
         filmStorage.addLike(filmId, userId);
-        feedStorage.addEvent(userId, EventType.LIKE, Operation.ADD, filmId);
+        if (!hasLike) {
+            feedStorage.addEvent(userId, EventType.LIKE, Operation.ADD, filmId);
+        }
         log.info("User {} liked film {}", userId, filmId);
     }
 
     public void removeLike(int filmId, int userId) {
         getFilmOrThrow(filmId);
         getUserOrThrow(userId);
+        boolean hasLike = filmStorage.hasLike(filmId, userId);
         filmStorage.removeLike(filmId, userId);
-        feedStorage.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
+        if (hasLike) {
+            feedStorage.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
+        }
         log.info("User {} removed like from film {}", userId, filmId);
     }
 

@@ -84,8 +84,11 @@ public class UserService {
         }
         getUserOrThrow(userId);
         getUserOrThrow(friendId);
+        boolean hasFriend = userStorage.hasFriend(userId, friendId);
         userStorage.addFriend(userId, friendId);
-        feedStorage.addEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
+        if (!hasFriend) {
+            feedStorage.addEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
+        }
         log.info("User {} added friend {}", userId, friendId);
     }
 
@@ -96,8 +99,11 @@ public class UserService {
         }
         getUserOrThrow(userId);
         getUserOrThrow(friendId);
+        boolean hasFriend = userStorage.hasFriend(userId, friendId);
         userStorage.removeFriend(userId, friendId);
-        feedStorage.addEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
+        if (hasFriend) {
+            feedStorage.addEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
+        }
         log.info("User {} removed friend {}", userId, friendId);
     }
 
