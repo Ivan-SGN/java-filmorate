@@ -7,10 +7,13 @@ import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -31,16 +34,19 @@ public class FilmService {
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
     private final FilmMapper filmMapper;
+    private final FeedStorage feedStorage;
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
             @Qualifier("userDbStorage") UserStorage userStorage,
+            @Qualifier("feedDbStorage") FeedStorage feedStorage,
             @Qualifier("genreDbStorage") GenreStorage genreStorage,
             @Qualifier("mpaDbStorage") MpaStorage mpaStorage,
             FilmMapper filmMapper
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.feedStorage = feedStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmMapper = filmMapper;
@@ -92,14 +98,22 @@ public class FilmService {
     public void addLike(int filmId, int userId) {
         getFilmOrThrow(filmId);
         getUserOrThrow(userId);
+        boolean hasLike = filmStorage.hasLike(filmId, userId);
         filmStorage.addLike(filmId, userId);
+        if (!hasLike) {
+            feedStorage.addEvent(userId, EventType.LIKE, Operation.ADD, filmId);
+        }
         log.info("User {} liked film {}", userId, filmId);
     }
 
     public void removeLike(int filmId, int userId) {
         getFilmOrThrow(filmId);
         getUserOrThrow(userId);
+        boolean hasLike = filmStorage.hasLike(filmId, userId);
         filmStorage.removeLike(filmId, userId);
+        if (hasLike) {
+            feedStorage.addEvent(userId, EventType.LIKE, Operation.REMOVE, filmId);
+        }
         log.info("User {} removed like from film {}", userId, filmId);
     }
 

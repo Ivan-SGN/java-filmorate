@@ -32,6 +32,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     private static final String INSERT_LIKE = "MERGE INTO film_likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
+    private static final String HAS_LIKE = "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?";
 
     private static final String GET_COMMON =
         "SELECT f.*, m.name AS mpa_name FROM films f " +
@@ -133,6 +134,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public void removeLike(int filmId, int userId) {
         jdbc.update(DELETE_LIKE, filmId, userId);
+    }
+
+    @Override
+    public boolean hasLike(int filmId, int userId) {
+        Integer count = jdbc.queryForObject(HAS_LIKE, Integer.class, filmId, userId);
+        return count > 0;
     }
 
     @Override
