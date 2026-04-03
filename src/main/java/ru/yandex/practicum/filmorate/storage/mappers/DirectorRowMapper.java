@@ -15,7 +15,7 @@ public class DirectorRowMapper implements RowMapper<Director> {
 
         int id = rs.getInt("id");
         String name = rs.getString("name");
-        Director director = new Director(id);
+        Director director = new Director(id, "name1");
         if (name != null) director.setName(name);
         return director;
     }

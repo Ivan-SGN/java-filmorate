@@ -9,4 +9,10 @@ public class Director {
     private int id;
 
     private String name;
+
+    public Director(int id, String name) {
+        this.setId(id);
+        this.setName(name);
+    }
+
 }
