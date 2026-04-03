@@ -7,6 +7,6 @@ import lombok.NonNull;
 public class Director {
     @NonNull
     private int id;
-    @NonNull
+
     private String name;
 }
