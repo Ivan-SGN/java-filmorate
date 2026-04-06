@@ -11,6 +11,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReviewDtoValidatorTest {
     private Validator validator;
 
+    private static ReviewDto validReviewDto() {
+        var dto = new ReviewDto();
+        dto.setReviewId(1L);
+        dto.setContent("This film is great.");
+        dto.setPositive(true);
+        dto.setUserId(1);
+        dto.setFilmId(1);
+        dto.setUseful(0);
+        return dto;
+    }
+
     @BeforeEach
     void setUp() {
         validator = Validation.buildDefaultValidatorFactory().getValidator();
@@ -72,16 +83,5 @@ class ReviewDtoValidatorTest {
         dto.setUseful(-10);
 
         assertThat(validator.validate(dto)).isEmpty();
-    }
-
-    private static ReviewDto validReviewDto() {
-        var dto = new ReviewDto();
-        dto.setReviewId(1L);
-        dto.setContent("This film is great.");
-        dto.setPositive(true);
-        dto.setUserId(1);
-        dto.setFilmId(1);
-        dto.setUseful(0);
-        return dto;
     }
 }

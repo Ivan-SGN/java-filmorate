@@ -31,20 +31,20 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
     private static final String GET_COMMON_FRIENDS =
             "SELECT u.* FROM users u " +
-            "JOIN friends f1 ON u.id = f1.friend_id " +
-            "JOIN friends f2 ON u.id = f2.friend_id " +
-            "WHERE f1.user_id = ? AND f2.user_id = ?";
+                    "JOIN friends f1 ON u.id = f1.friend_id " +
+                    "JOIN friends f2 ON u.id = f2.friend_id " +
+                    "WHERE f1.user_id = ? AND f2.user_id = ?";
     private static final String GET_RECOMMENDATIONS =
             "SELECT f.*, m.name AS mpa_name FROM films f " +
-            "JOIN mpa m ON f.mpa_id = m.id " +
-            "JOIN film_likes l1 ON f.id = l1.film_id " +
-            "WHERE l1.user_id = (" +
-            "    SELECT l2.user_id FROM film_likes l2 " +
-            "    JOIN film_likes l3 ON l2.film_id = l3.film_id " +
-            "    WHERE l3.user_id = :userId AND l2.user_id != :userId " +
-            "    GROUP BY l2.user_id ORDER BY COUNT(l2.film_id) DESC, l2.user_id ASC LIMIT 1" +
-            ") " +
-            "AND f.id NOT IN (SELECT film_id FROM film_likes WHERE user_id = :userId)";
+                    "JOIN mpa m ON f.mpa_id = m.id " +
+                    "JOIN film_likes l1 ON f.id = l1.film_id " +
+                    "WHERE l1.user_id = (" +
+                    "    SELECT l2.user_id FROM film_likes l2 " +
+                    "    JOIN film_likes l3 ON l2.film_id = l3.film_id " +
+                    "    WHERE l3.user_id = :userId AND l2.user_id != :userId " +
+                    "    GROUP BY l2.user_id ORDER BY COUNT(l2.film_id) DESC, l2.user_id ASC LIMIT 1" +
+                    ") " +
+                    "AND f.id NOT IN (SELECT film_id FROM film_likes WHERE user_id = :userId)";
 
     private final NamedParameterJdbcTemplate namedJdbc;
 

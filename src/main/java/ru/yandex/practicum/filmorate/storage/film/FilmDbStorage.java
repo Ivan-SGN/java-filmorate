@@ -1,23 +1,19 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import java.time.Year;
-import java.util.ArrayList;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
-import java.util.List;
-import java.util.Optional;
-import ru.yandex.practicum.filmorate.model.Genre;
-import java.util.Map;
-import java.util.Set;
+import java.time.Year;
+import java.util.*;
 
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
@@ -37,22 +33,22 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String HAS_LIKE = "SELECT COUNT(*) FROM film_likes WHERE film_id = ? AND user_id = ?";
 
     private static final String GET_COMMON =
-        "SELECT f.*, m.name AS mpa_name FROM films f " +
-            "JOIN film_likes fl1 ON f.id = fl1.film_id AND fl1.user_id = ? " +
-            "JOIN film_likes fl2 ON f.id = fl2.film_id AND fl2.user_id = ? " +
-            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-            "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
-            "GROUP BY f.id, m.name " +
-            "ORDER BY COUNT(fl.user_id) DESC";
+            "SELECT f.*, m.name AS mpa_name FROM films f " +
+                    "JOIN film_likes fl1 ON f.id = fl1.film_id AND fl1.user_id = ? " +
+                    "JOIN film_likes fl2 ON f.id = fl2.film_id AND fl2.user_id = ? " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                    "GROUP BY f.id, m.name " +
+                    "ORDER BY COUNT(fl.user_id) DESC";
 
     private static final String GET_POPULAR =
-        "SELECT f.*, m.name AS mpa_name " +
-            "FROM films f " +
-            "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-            "LEFT JOIN (" +
-            "SELECT film_id, COUNT(*) AS likes_count " +
-            "FROM film_likes GROUP BY film_id" +
-            ") l ON f.id = l.film_id ";
+            "SELECT f.*, m.name AS mpa_name " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "LEFT JOIN (" +
+                    "SELECT film_id, COUNT(*) AS likes_count " +
+                    "FROM film_likes GROUP BY film_id" +
+                    ") l ON f.id = l.film_id ";
 
     private final GenreStorage genreStorage;
     private final NamedParameterJdbcTemplate namedJdbc;

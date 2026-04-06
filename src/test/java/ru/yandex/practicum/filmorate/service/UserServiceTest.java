@@ -17,8 +17,6 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -174,12 +172,12 @@ class UserServiceTest {
 
         jdbcTemplate.update("INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
                 "Rec Film", "Description", "2022-01-01", 90, 1);
-        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)",filmId1, user1.getId());
-        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)",filmId1, user2.getId());
+        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, user1.getId());
+        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, user2.getId());
 
         jdbcTemplate.update("INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
                 "Target Film", "Description", "2023-01-01", 95, 1);
-        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)",film2Id, user2.getId());
+        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", film2Id, user2.getId());
 
         var recommendations = userService.getRecommendations(user1.getId().intValue());
 
