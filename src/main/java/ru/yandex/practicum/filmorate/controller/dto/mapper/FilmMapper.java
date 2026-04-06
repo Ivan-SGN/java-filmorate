@@ -13,6 +13,5 @@ public interface FilmMapper {
     FilmRsDto mapToRsDto(Film film);
 
     @Mapping(target = "likes", ignore = true)
-    @Mapping(target = "directors", ignore = true)
     Film map(FilmRqDto filmRqDto);
 }
