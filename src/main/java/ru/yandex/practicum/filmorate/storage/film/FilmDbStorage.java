@@ -87,6 +87,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             enrichFilmsWithGenres(List.of(f));
             enrichFilmsWithDirectors(List.of(f));
         }
+
         return film;
     }
 
@@ -115,6 +116,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public Optional<Film> updateFilm(Film film) {
         Integer mpaId = film.getMpa() != null ? film.getMpa().getId() : null;
+
         update(
                 UPDATE,
                 film.getName(),
