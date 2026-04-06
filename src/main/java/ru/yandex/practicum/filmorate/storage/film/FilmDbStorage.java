@@ -81,7 +81,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public Optional<Film> getFilm(int filmId) {
         Optional<Film> film = findOne(FIND_BY_ID, filmId);
-        film.ifPresent(f -> enrichFilmsWithGenres(List.of(f)));
+
+        if (film.isPresent()) {
+            Film f = film.get();
+            enrichFilmsWithGenres(List.of(f));
+            enrichFilmsWithDirectors(List.of(f));
+        }
         return film;
     }
 
@@ -121,8 +126,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         );
         genreStorage.deleteGenresFromFilm(film.getId());
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
+        directorStorage.deleteDirectorsFromFilm(film.getId());
         directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
-        return Optional.of(film);
+        return getFilm(film.getId());
     }
 
     @Override
