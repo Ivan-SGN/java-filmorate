@@ -17,4 +17,6 @@ public class FilmRsDto {
     private Integer duration;
     private MpaDto mpa;
     private List<GenreDto> genres = new ArrayList<>();
+
+    private List<DirectorDto> directors = new ArrayList<>();
 }

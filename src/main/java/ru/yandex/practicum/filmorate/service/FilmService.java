@@ -7,11 +7,8 @@ import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.Operation;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
@@ -35,6 +32,7 @@ public class FilmService {
     private final MpaStorage mpaStorage;
     private final FilmMapper filmMapper;
     private final FeedStorage feedStorage;
+    private final DirectorStorage directorStorage;
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
@@ -42,7 +40,8 @@ public class FilmService {
             @Qualifier("feedDbStorage") FeedStorage feedStorage,
             @Qualifier("genreDbStorage") GenreStorage genreStorage,
             @Qualifier("mpaDbStorage") MpaStorage mpaStorage,
-            FilmMapper filmMapper
+            @Qualifier("directorDbStorage") DirectorStorage directorStorage,
+            FilmMapper filmMapper, DirectorStorage directorStorage1
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
@@ -50,6 +49,7 @@ public class FilmService {
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmMapper = filmMapper;
+        this.directorStorage = directorStorage1;
     }
 
     public FilmRsDto addFilm(FilmRqDto filmRqDto) {
@@ -123,6 +123,12 @@ public class FilmService {
         log.info("Film {} deleted", filmId);
     }
 
+    public List<FilmRsDto> getFilmsByDirector(int directorId, String sortBy) {
+        return filmStorage.getFilmsByDirector(directorId, sortBy).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
     private Film getFilmOrThrow(int id) {
         return filmStorage.getFilm(id)
                 .orElseThrow(() -> {
@@ -153,6 +159,7 @@ public class FilmService {
     private void resolveReferences(Film film) {
         film.setGenres(resolveGenres(film.getGenres()));
         film.setMpa(resolveMpa(film.getMpa()));
+        film.setDirectors(resolveDirectors(film.getDirectors()));
     }
 
     private Mpa resolveMpa(Mpa mpa) {
@@ -189,5 +196,22 @@ public class FilmService {
             log.warn("Genres not found: missingIds={}", missingGenreIds);
             throw new NotFoundException("Genres not found: " + missingGenreIds);
         }
+    }
+
+    private Set<Director> resolveDirectors(Collection<Director> directors) {
+        if (directors == null || directors.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        Set<Integer> ids = directors.stream()
+                .map(Director::getId)
+                .collect(Collectors.toSet());
+
+        List<Director> found = ids.stream()
+                .map(id -> directorStorage.getById(id)
+                        .orElseThrow(() -> new NotFoundException("Director not found: " + id)))
+                .toList();
+
+        return new HashSet<>(found);
     }
 }

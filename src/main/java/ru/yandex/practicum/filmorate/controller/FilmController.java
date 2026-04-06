@@ -80,4 +80,12 @@ public class FilmController {
             throw new ValidationException(entityName + " id must be positive");
         }
     }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmRsDto> getByDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "likes") String sortBy
+    ) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
 }

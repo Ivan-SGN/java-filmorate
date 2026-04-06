@@ -6,8 +6,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
@@ -54,11 +56,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     private final GenreStorage genreStorage;
     private final NamedParameterJdbcTemplate namedJdbc;
+    private final DirectorStorage directorStorage;
 
-    public FilmDbStorage(JdbcTemplate jdbc, GenreStorage genreStorage, NamedParameterJdbcTemplate namedJdbc) {
+    public FilmDbStorage(JdbcTemplate jdbc, GenreStorage genreStorage, DirectorStorage directorStorage, NamedParameterJdbcTemplate namedJdbc) {
         super(jdbc, new FilmRowMapper());
         this.genreStorage = genreStorage;
         this.namedJdbc = namedJdbc;
+        this.directorStorage = directorStorage;
     }
 
     @Override
@@ -74,6 +78,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         );
         film.setId((int) id);
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
+        directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
         return film;
     }
 
@@ -91,6 +96,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             return films;
         }
         enrichFilmsWithGenres(films);
+        enrichFilmsWithDirectors(films);
         return films;
     }
 
@@ -101,6 +107,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             return films;
         }
         enrichFilmsWithGenres(films);
+        enrichFilmsWithDirectors(films);
         return films;
     }
 
@@ -118,6 +125,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         );
         genreStorage.deleteGenresFromFilm(film.getId());
         genreStorage.saveGenresForFilm(film.getId(), film.getGenres());
+        directorStorage.saveDirectorsForFilm(film.getId(), film.getDirectors());
         return Optional.of(film);
     }
 
@@ -155,6 +163,31 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         }
 
         enrichFilmsWithGenres(films);
+        enrichFilmsWithDirectors(films);
+        return films;
+    }
+
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+
+        String orderBy = sortBy.equals("year")
+                ? "f.release_date"
+                : "COUNT(fl.user_id) DESC";
+
+        String query =
+                "SELECT f.*, m.name AS mpa_name " +
+                        "FROM films f " +
+                        "JOIN film_directors fd ON f.id = fd.film_id " +
+                        "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                        "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                        "WHERE fd.director_id = ? " +
+                        "GROUP BY f.id, m.name " +
+                        "ORDER BY " + orderBy;
+
+        List<Film> films = findMany(query, directorId);
+
+        enrichFilmsWithGenres(films);
+        enrichFilmsWithDirectors(films);
+
         return films;
     }
 
@@ -193,5 +226,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         sql.append("LIMIT :count");
 
         return sql.toString();
+    }
+
+    private void enrichFilmsWithDirectors(List<Film> films) {
+        List<Integer> ids = films.stream().map(Film::getId).toList();
+
+        Map<Integer, Set<Director>> directors =
+                directorStorage.getDirectorsForFilms(ids);
+
+        for (Film film : films) {
+            film.setDirectors(directors.getOrDefault(film.getId(), Set.of()));
+        }
     }
 }
