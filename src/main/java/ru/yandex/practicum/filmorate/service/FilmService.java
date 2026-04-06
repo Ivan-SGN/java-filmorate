@@ -129,6 +129,12 @@ public class FilmService {
                 .toList();
     }
 
+    public List<FilmRsDto> searchFilms(String query, String by) {
+        return filmStorage.searchFilms(query, by).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
     private Film getFilmOrThrow(int id) {
         return filmStorage.getFilm(id)
                 .orElseThrow(() -> {
