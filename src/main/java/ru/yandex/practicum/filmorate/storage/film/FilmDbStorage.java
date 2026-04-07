@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
 import java.time.Year;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 @Service
 public class FilmService {
 
+    private static final Set<String> ALLOWED_PARAMS = Set.of("title", "director");
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final GenreStorage genreStorage;
@@ -150,8 +151,6 @@ public class FilmService {
                 .map(filmMapper::mapToRsDto)
                 .toList();
     }
-
-    private static final Set<String> ALLOWED_PARAMS = Set.of("title", "director");
 
     private Set<String> parseAndValidate(String by) {
         if (by == null || by.isBlank()) {
