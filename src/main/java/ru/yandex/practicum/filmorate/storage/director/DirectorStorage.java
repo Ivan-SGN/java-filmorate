@@ -8,13 +8,13 @@ public interface DirectorStorage {
 
     List<Director> getAll();
 
-    Optional<Director> getById(int id);
+    Optional<Director> getById(long id);
 
     Director create(Director director);
 
     Director update(Director director);
 
-    void delete(int id);
+    void delete(long id);
 
     Map<Integer, Set<Director>> getDirectorsForFilms(List<Integer> filmIds);
 

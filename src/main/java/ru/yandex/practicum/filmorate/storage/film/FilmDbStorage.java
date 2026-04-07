@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
 import java.time.Year;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
@@ -39,7 +40,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     "LEFT JOIN mpa m ON f.mpa_id = m.id " +
                     "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
                     "GROUP BY f.id, m.name " +
-                    "ORDER BY COUNT(fl.user_id) DESC";
+                    "ORDER BY COUNT(DISTINCT fl.user_id) DESC";
 
     private static final String GET_POPULAR =
             "SELECT f.*, m.name AS mpa_name " +
@@ -49,6 +50,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     "SELECT film_id, COUNT(*) AS likes_count " +
                     "FROM film_likes GROUP BY film_id" +
                     ") l ON f.id = l.film_id ";
+
+    private static final String QUERY =
+            "SELECT f.*, m.name AS mpa_name " +
+                    "FROM films f " +
+                    "JOIN film_directors fd ON f.id = fd.film_id " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                    "WHERE fd.director_id = ? " +
+                    "GROUP BY f.id, m.name " +
+                    "ORDER BY ";
 
     private final GenreStorage genreStorage;
     private final NamedParameterJdbcTemplate namedJdbc;
@@ -177,15 +188,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 ? "f.release_date"
                 : "COUNT(fl.user_id) DESC";
 
-        String query =
-                "SELECT f.*, m.name AS mpa_name " +
-                        "FROM films f " +
-                        "JOIN film_directors fd ON f.id = fd.film_id " +
-                        "LEFT JOIN mpa m ON f.mpa_id = m.id " +
-                        "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
-                        "WHERE fd.director_id = ? " +
-                        "GROUP BY f.id, m.name " +
-                        "ORDER BY " + orderBy;
+        String query = QUERY + orderBy;
 
         List<Film> films = findMany(query, directorId);
 
@@ -196,56 +199,64 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Film> searchFilms(String query, String by) {
+    public List<Film> searchFilms(String query, Set<String> byParams) {
+        String sql = buildSearchQuery(byParams);
+        List<Film> films = findMany(sql, prepareSearchArgs(query, byParams));
 
-        String[] params = by.split(",");
+        if (films.isEmpty()) {
+            return films;
+        }
 
+        enrichFilmsWithGenres(films);
+        enrichFilmsWithDirectors(films);
+        return films;
+    }
+
+    private Object[] prepareSearchArgs(String query, Set<String> byParams) {
+        String likeQuery = "%" + query + "%";
+        List<Object> args = new ArrayList<>();
+        if (byParams.contains("title")) {
+            args.add(likeQuery);
+        }
+        if (byParams.contains("director")) {
+            args.add(likeQuery);
+        }
+        return args.toArray();
+    }
+
+    private String buildSearchQuery(Set<String> byParams) {
         StringBuilder sql = new StringBuilder(
                 "SELECT f.*, m.name AS mpa_name " +
                         "FROM films f " +
                         "LEFT JOIN mpa m ON f.mpa_id = m.id " +
                         "LEFT JOIN film_likes fl ON f.id = fl.film_id "
         );
-
-        // нужен JOIN только если ищем по режиссёру
-        if (Arrays.asList(params).contains("director")) {
-            sql.append(
-                    "LEFT JOIN film_directors fd ON f.id = fd.film_id " +
-                            "LEFT JOIN directors d ON fd.director_id = d.id "
-            );
+        if (byParams.contains("director")) {
+            sql.append("LEFT JOIN film_directors fd ON f.id = fd.film_id ")
+                    .append("LEFT JOIN directors d ON d.id = fd.director_id ");
         }
-
-        sql.append("WHERE ");
-
-        List<String> conditions = new ArrayList<>();
-
-        if (Arrays.asList(params).contains("title")) {
-            conditions.add("LOWER(f.name) LIKE LOWER(?)");
+        List<String> conditions = buildSearchConditions(byParams);
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ")
+                    .append(String.join(" OR ", conditions));
         }
-
-        if (Arrays.asList(params).contains("director")) {
-            conditions.add("LOWER(d.name) LIKE LOWER(?)");
-        }
-
-        sql.append(String.join(" OR ", conditions));
-
         sql.append(
                 " GROUP BY f.id, m.name " +
-                        " ORDER BY COUNT(fl.user_id) DESC"
+                        " ORDER BY COUNT(DISTINCT fl.user_id) DESC"
         );
+        return sql.toString();
+    }
 
-        // параметры для PreparedStatement
-        List<Object> sqlParams = new ArrayList<>();
-        for (int i = 0; i < conditions.size(); i++) {
-            sqlParams.add("%" + query + "%");
+    private List<String> buildSearchConditions(Set<String> byParams) {
+        List<String> conditions = new ArrayList<>();
+
+        if (byParams.contains("title")) {
+            conditions.add("LOWER(f.name) LIKE LOWER(?)");
         }
-
-        List<Film> films = findMany(sql.toString(), sqlParams.toArray());
-
-        enrichFilmsWithGenres(films);
-        enrichFilmsWithDirectors(films);
-
-        return films;
+        if (byParams.contains("director")) {
+            conditions.add("LOWER(d.name) LIKE LOWER(?)");
+        }
+        return conditions;
     }
 
     private void enrichFilmsWithGenres(List<Film> films) {

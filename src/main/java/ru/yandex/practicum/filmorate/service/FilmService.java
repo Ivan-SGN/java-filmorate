@@ -16,10 +16,7 @@ import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.Year;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,8 +37,8 @@ public class FilmService {
             @Qualifier("feedDbStorage") FeedStorage feedStorage,
             @Qualifier("genreDbStorage") GenreStorage genreStorage,
             @Qualifier("mpaDbStorage") MpaStorage mpaStorage,
-            @Qualifier("directorDbStorage") DirectorStorage directorStorage,
-            FilmMapper filmMapper, DirectorStorage directorStorage1
+            @Qualifier("directorDbStorage") DirectorStorage directorDBStorage,
+            FilmMapper filmMapper, DirectorStorage directorStorage
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
@@ -49,7 +46,7 @@ public class FilmService {
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmMapper = filmMapper;
-        this.directorStorage = directorStorage1;
+        this.directorStorage = directorStorage;
     }
 
     public FilmRsDto addFilm(FilmRqDto filmRqDto) {
@@ -130,9 +127,44 @@ public class FilmService {
     }
 
     public List<FilmRsDto> searchFilms(String query, String by) {
-        return filmStorage.searchFilms(query, by).stream()
+        if (query == null || query.isBlank()) {
+            throw new IllegalArgumentException("Query must not be empty");
+        }
+
+        if (by == null || by.isBlank()) {
+            throw new IllegalArgumentException("Parameter 'by' must not be empty");
+        }
+
+        Set<String> allowed = Set.of("title", "director");
+
+        Set<String> params = Arrays.stream(by.toLowerCase().split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+
+        if (!allowed.containsAll(params)) {
+            log.warn("Invalid 'by' parameter: {}", by);
+            throw new IllegalArgumentException("Parameter 'by' must be 'title', 'director' or both");
+        }
+        Set<String> byParams = parseAndValidate(by);
+        return filmStorage.searchFilms(query, byParams).stream()
                 .map(filmMapper::mapToRsDto)
                 .toList();
+    }
+
+    private static final Set<String> ALLOWED_PARAMS = Set.of("title", "director");
+
+    private Set<String> parseAndValidate(String by) {
+        if (by == null || by.isBlank()) {
+            throw new IllegalArgumentException("Parameter 'by' is empty");
+        }
+        Set<String> params = Arrays.stream(by.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+        if (!ALLOWED_PARAMS.containsAll(params)) {
+            throw new IllegalArgumentException("Unknown search parameter");
+        }
+        return params;
     }
 
     private Film getFilmOrThrow(int id) {

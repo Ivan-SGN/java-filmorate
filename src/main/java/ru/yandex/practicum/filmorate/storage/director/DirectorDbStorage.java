@@ -49,7 +49,7 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
     }
 
     @Override
-    public Optional<Director> getById(int id) {
+    public Optional<Director> getById(long id) {
         return findOne(FIND_BY_ID, id);
     }
 
@@ -62,21 +62,12 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public Director update(Director director) {
-        Optional<Director> existing = getById(director.getId());
-
-        if (existing.isEmpty()) {
-            throw new NotFoundException("Director not found");
-        }
-
-
         update(UPDATE, director.getName(), director.getId());
         return director;
     }
 
-
-
     @Override
-    public void delete(int id) {
+    public void delete(long id) {
         delete(DELETE, id);
     }
 
@@ -105,9 +96,7 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
     @Override
     public void saveDirectorsForFilm(int filmId, Collection<Director> directors) {
         jdbc.update(DELETE_FILM_DIRECTORS, filmId);
-
         if (directors == null) return;
-
         for (Director d : directors) {
             jdbc.update(INSERT_FILM_DIRECTOR, filmId, d.getId());
         }
