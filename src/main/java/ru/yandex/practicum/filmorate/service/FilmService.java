@@ -131,37 +131,25 @@ public class FilmService {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Query must not be empty");
         }
-
-        if (by == null || by.isBlank()) {
-            throw new IllegalArgumentException("Parameter 'by' must not be empty");
-        }
-
-        Set<String> allowed = Set.of("title", "director");
-
-        Set<String> params = Arrays.stream(by.toLowerCase().split(","))
-                .map(String::trim)
-                .collect(Collectors.toSet());
-
-        if (!allowed.containsAll(params)) {
-            log.warn("Invalid 'by' parameter: {}", by);
-            throw new IllegalArgumentException("Parameter 'by' must be 'title', 'director' or both");
-        }
-        Set<String> byParams = parseAndValidate(by);
+        log.info("Search films request, query={}, by={}", query, by);
+        Set<String> byParams = parseAndValidateByParams(by);
         return filmStorage.searchFilms(query, byParams).stream()
                 .map(filmMapper::mapToRsDto)
                 .toList();
     }
 
-    private Set<String> parseAndValidate(String by) {
+    private Set<String> parseAndValidateByParams(String by) {
         if (by == null || by.isBlank()) {
-            throw new IllegalArgumentException("Parameter 'by' is empty");
+            throw new IllegalArgumentException("Parameter 'by' must not be empty");
         }
         Set<String> params = Arrays.stream(by.split(","))
                 .map(String::trim)
                 .map(String::toLowerCase)
+                .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());
-        if (!ALLOWED_PARAMS.containsAll(params)) {
-            throw new IllegalArgumentException("Unknown search parameter");
+        if (params.isEmpty() || !ALLOWED_PARAMS.containsAll(params)) {
+            log.warn("Invalid 'by' params = {}", by);
+            throw new IllegalArgumentException("Parameter 'by' must be 'title', 'director' or both");
         }
         return params;
     }
