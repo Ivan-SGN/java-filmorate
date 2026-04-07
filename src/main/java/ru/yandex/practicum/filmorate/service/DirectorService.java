@@ -26,14 +26,8 @@ public class DirectorService {
     }
 
     public DirectorDto getById(int id) {
-        Director director = directorStorage.getById(id)
-                .orElseThrow(() -> {
-                    log.warn("Director not found: id={}", id);
-                    return new NotFoundException("Director not found with id=" + id);
-                });
-
+        Director director = getDirectorOrThrow(id);
         log.info("Director fetched: id={}", id);
-
         return directorMapper.mapToDto(director);
     }
 
@@ -46,23 +40,24 @@ public class DirectorService {
     }
 
     public DirectorDto update(DirectorDto dto) {
+        getDirectorOrThrow(dto.getId());
         Director director = directorMapper.map(dto);
-
         Director updated = directorStorage.update(director);
-
         log.info("Director updated: id={}", updated.getId());
-
         return directorMapper.mapToDto(updated);
     }
 
     private Director getDirectorOrThrow(long id) {
         return directorStorage.getById(id)
-                .orElseThrow(() -> new NotFoundException("Director not found"));
+                .orElseThrow(() -> {
+                    log.warn("Director not found: id={}", id);
+                    return new NotFoundException("Director not found with id=" + id);
+                });
     }
 
     public void delete(long id) {
+        getDirectorOrThrow(id);
         directorStorage.delete(id);
-
         log.info("Director deleted: id={}", id);
     }
 }
