@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
@@ -61,6 +62,10 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public Director update(Director director) {
+        Optional<Director> existing = getById(director.getId());
+        if (existing.isEmpty()) {
+            throw new NotFoundException("Director not found");
+        }
         update(UPDATE, director.getName(), director.getId());
         return director;
     }
