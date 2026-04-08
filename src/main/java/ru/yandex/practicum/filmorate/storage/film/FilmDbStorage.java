@@ -50,6 +50,18 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     "FROM film_likes GROUP BY film_id" +
                     ") l ON f.id = l.film_id ";
 
+    private static final String GET_RECOMMENDATIONS =
+            "SELECT f.*, m.name AS mpa_name FROM films f " +
+                    "LEFT JOIN mpa m ON f.mpa_id = m.id " +
+                    "JOIN film_likes l1 ON f.id = l1.film_id " +
+                    "WHERE l1.user_id = (" +
+                    "    SELECT l2.user_id FROM film_likes l2 " +
+                    "    JOIN film_likes l3 ON l2.film_id = l3.film_id " +
+                    "    WHERE l3.user_id = :userId AND l2.user_id != :userId " +
+                    "    GROUP BY l2.user_id ORDER BY COUNT(l2.film_id) DESC, l2.user_id ASC LIMIT 1" +
+                    ") " +
+                    "AND f.id NOT IN (SELECT film_id FROM film_likes WHERE user_id = :userId)";
+
     private static final String QUERY =
             "SELECT f.*, m.name AS mpa_name " +
                     "FROM films f " +
@@ -176,6 +188,17 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         enrichFilmsWithGenres(films);
         enrichFilmsWithDirectors(films);
+        return films;
+    }
+
+    @Override
+    public List<Film> getRecommendations(int userId) {
+        var params = Map.of("userId", userId);
+        List<Film> films = namedJdbc.query(GET_RECOMMENDATIONS, params, mapper);
+
+        enrichFilmsWithGenres(films);
+        enrichFilmsWithDirectors(films);
+
         return films;
     }
 
