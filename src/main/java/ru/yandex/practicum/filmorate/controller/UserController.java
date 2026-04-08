@@ -41,43 +41,43 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public UserDto getUser(@PathVariable @Positive int userId) {
+    public UserDto getUser(@PathVariable int userId) {
         return userService.getUser(userId);
     }
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable @Positive int userId) {
+    public void deleteUser(@PathVariable int userId) {
         userService.deleteUser(userId);
     }
 
     @PutMapping("/{userId}/friends/{friendId}")
-    public void addFriend(@PathVariable @Positive int userId, @PathVariable @Positive int friendId) {
+    public void addFriend(@PathVariable int userId, @PathVariable int friendId) {
         userService.addFriend(userId, friendId);
     }
 
     @DeleteMapping("/{userId}/friends/{friendId}")
-    public void removeFriend(@PathVariable @Positive int userId, @PathVariable @Positive int friendId) {
+    public void removeFriend(@PathVariable int userId, @PathVariable int friendId) {
         userService.removeFriend(userId, friendId);
     }
 
     @GetMapping("/{userId}/friends")
-    public Collection<UserDto> getFriends(@PathVariable @Positive int userId) {
+    public Collection<UserDto> getFriends(@PathVariable int userId) {
         return userService.getFriends(userId);
     }
 
     @GetMapping("/{userId}/friends/common/{otherId}")
-    public Collection<UserDto> getCommonFriends(@PathVariable @Positive int userId, @PathVariable @Positive int otherId) {
+    public Collection<UserDto> getCommonFriends(@PathVariable int userId, @PathVariable int otherId) {
         return userService.getCommonFriends(userId, otherId);
     }
 
     @GetMapping("/{userId}/recommendations")
-    public Collection<FilmRsDto> getRecommendations(@PathVariable @Positive int userId) {
+    public Collection<FilmRsDto> getRecommendations(@PathVariable int userId) {
         return userService.getRecommendations(userId);
     }
 
     @GetMapping("/{userId}/feed")
-    public Collection<FeedEventDto> getFeed(@PathVariable @Positive int userId) {
+    public Collection<FeedEventDto> getFeed(@PathVariable int userId) {
         return userService.getFeed(userId);
     }
 
