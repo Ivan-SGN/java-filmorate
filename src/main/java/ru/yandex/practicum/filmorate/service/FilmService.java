@@ -144,7 +144,7 @@ public class FilmService {
 
     private Set<String> parseAndValidateByParams(String by) {
         if (by == null || by.isBlank()) {
-            throw new IllegalArgumentException("Parameter 'by' must not be empty");
+            throw new IllegalArgumentException("Parameter \"by\" must not be empty");
         }
         Set<String> params = Arrays.stream(by.split(","))
                 .map(String::trim)
