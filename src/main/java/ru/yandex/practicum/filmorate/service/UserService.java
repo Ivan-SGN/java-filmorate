@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
@@ -24,22 +25,25 @@ import java.util.Collection;
 public class UserService {
 
     private final UserStorage userStorage;
+    private final FeedStorage feedStorage;
+    private final FilmStorage filmStorage;
     private final UserMapper userMapper;
     private final FilmMapper filmMapper;
-    private final FeedStorage feedStorage;
     private final FeedEventMapper feedEventMapper;
 
     public UserService(
             @Qualifier("userDbStorage") UserStorage userStorage,
+            @Qualifier("feedDbStorage") FeedStorage feedStorage,
+            @Qualifier("filmDbStorage") FilmStorage filmStorage,
             UserMapper userMapper,
             FilmMapper filmMapper,
-            @Qualifier("feedDbStorage") FeedStorage feedStorage,
             FeedEventMapper feedEventMapper
     ) {
         this.userStorage = userStorage;
+        this.feedStorage = feedStorage;
+        this.filmStorage = filmStorage;
         this.userMapper = userMapper;
         this.filmMapper = filmMapper;
-        this.feedStorage = feedStorage;
         this.feedEventMapper = feedEventMapper;
     }
 
@@ -131,8 +135,7 @@ public class UserService {
     public Collection<FilmRsDto> getRecommendations(int userId) {
         getUserOrThrow(userId);
         log.info("Get recommendations request for user {}", userId);
-
-        return userStorage.getRecommendations(userId).stream()
+        return filmStorage.getRecommendations(userId).stream()
                 .map(filmMapper::mapToRsDto)
                 .toList();
     }

@@ -8,15 +8,16 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.Year;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,12 +30,13 @@ class FilmDbStorageTest {
     private final FilmStorage filmStorage;
     private final JdbcTemplate jdbc;
     private Film testFilm;
+    private int testUserId;
 
     @BeforeEach
     void setUp() {
         testFilm = createFilm();
         testFilm = filmStorage.createFilm(testFilm);
-        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (1,'test@mail.com','login','name','1990-01-01')");
+        testUserId = insertUser("test@mail.com", "login", "name", "1990-01-01");
     }
 
     @Test
@@ -74,7 +76,7 @@ class FilmDbStorageTest {
 
     @Test
     void testAddLike() {
-        filmStorage.addLike(testFilm.getId(), 1);
+        filmStorage.addLike(testFilm.getId(), testUserId);
 
         List<Film> popular = filmStorage.getPopularFilms(10, null, null);
 
@@ -83,7 +85,7 @@ class FilmDbStorageTest {
 
     @Test
     void testGetPopularFilms() {
-        filmStorage.addLike(testFilm.getId(), 1);
+        filmStorage.addLike(testFilm.getId(), testUserId);
 
         List<Film> popular = filmStorage.getPopularFilms(10, null, null);
 
@@ -92,8 +94,8 @@ class FilmDbStorageTest {
 
     @Test
     void testRemoveLike() {
-        filmStorage.addLike(testFilm.getId(), 1);
-        filmStorage.removeLike(testFilm.getId(), 1);
+        filmStorage.addLike(testFilm.getId(), testUserId);
+        filmStorage.removeLike(testFilm.getId(), testUserId);
 
         List<Film> popular = filmStorage.getPopularFilms(10, null, null);
 
@@ -110,8 +112,8 @@ class FilmDbStorageTest {
         Film created1 = filmStorage.createFilm(film1);
         Film created2 = filmStorage.createFilm(film2);
 
-        filmStorage.addLike(created1.getId(), 1);
-        filmStorage.addLike(created2.getId(), 1);
+        filmStorage.addLike(created1.getId(), testUserId);
+        filmStorage.addLike(created2.getId(), testUserId);
 
         List<Film> popular = filmStorage.getPopularFilms(10, 1, null);
 
@@ -128,8 +130,8 @@ class FilmDbStorageTest {
         Film created1 = filmStorage.createFilm(film1);
         Film created2 = filmStorage.createFilm(film2);
 
-        filmStorage.addLike(created1.getId(), 1);
-        filmStorage.addLike(created2.getId(), 1);
+        filmStorage.addLike(created1.getId(), testUserId);
+        filmStorage.addLike(created2.getId(), testUserId);
 
         List<Film> popular = filmStorage.getPopularFilms(10, null, Year.of(2001));
 
@@ -149,7 +151,7 @@ class FilmDbStorageTest {
 
     @Test
     void testDeleteFilmCascadeLikes() {
-        filmStorage.addLike(testFilm.getId(), 1);
+        filmStorage.addLike(testFilm.getId(), testUserId);
 
         filmStorage.deleteFilm(testFilm.getId());
 
@@ -165,12 +167,12 @@ class FilmDbStorageTest {
     @Test
     void testGetCommonFilms() {
         Film secondFilm = filmStorage.createFilm(createFilm());
-        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (2,'test2@mail.com','login2','name2','1991-01-01')");
+        int userId2 = insertUser("test2@mail.com", "login2", "name2", "1990-01-01");
 
-        filmStorage.addLike(testFilm.getId(), 1);
-        filmStorage.addLike(testFilm.getId(), 2);
-        filmStorage.addLike(secondFilm.getId(), 1);
-        List<Film> common = filmStorage.getCommonFilms(1, 2);
+        filmStorage.addLike(testFilm.getId(), testUserId);
+        filmStorage.addLike(testFilm.getId(), userId2);
+        filmStorage.addLike(secondFilm.getId(), testUserId);
+        List<Film> common = filmStorage.getCommonFilms(testUserId, userId2);
 
         assertEquals(1, common.size());
         assertEquals(testFilm.getId(), common.get(0).getId());
@@ -179,19 +181,71 @@ class FilmDbStorageTest {
     @Test
     void testGetCommonFilmsSortedByPopularity() {
         Film secondFilm = filmStorage.createFilm(createFilm());
-        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (2,'test2@mail.com','login2','name2','1991-01-01')");
-        jdbc.update("INSERT INTO users(id,email,login,name,birthday) VALUES (3,'test3@mail.com','login3','name3','1992-01-01')");
+        int userId2 = insertUser("test2@mail.com", "login2", "name2", "1990-01-01");
+        int userId3 = insertUser("test3@mail.com", "login3", "name3", "1990-01-01");
 
-        filmStorage.addLike(testFilm.getId(), 1);
-        filmStorage.addLike(testFilm.getId(), 2);
-        filmStorage.addLike(testFilm.getId(), 3);
-        filmStorage.addLike(secondFilm.getId(), 1);
-        filmStorage.addLike(secondFilm.getId(), 2);
-        List<Film> common = filmStorage.getCommonFilms(1, 2);
+        filmStorage.addLike(testFilm.getId(), testUserId);
+        filmStorage.addLike(testFilm.getId(), userId2);
+        filmStorage.addLike(testFilm.getId(), userId3);
+        filmStorage.addLike(secondFilm.getId(), testUserId);
+        filmStorage.addLike(secondFilm.getId(), userId2);
+        List<Film> common = filmStorage.getCommonFilms(testUserId, userId2);
 
         assertEquals(2, common.size());
         assertEquals(testFilm.getId(), common.get(0).getId());
         assertEquals(secondFilm.getId(), common.get(1).getId());
+    }
+
+    @Test
+    void testGetRecommendationsSuccess() {
+        long userId2 = insertUser("test2@mail.com", "login2", "name2", "1990-01-01");
+
+        Film film1 = createFilm();
+        film1.setName("Film 1");
+        long filmId1 = filmStorage.createFilm(film1).getId();
+
+        Film film2 = createFilm();
+        film2.setName("Film 2");
+        long filmId2 = filmStorage.createFilm(film2).getId();
+
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, testUserId);
+
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, userId2);
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId2, userId2);
+
+        Collection<Film> recommendations = filmStorage.getRecommendations(testUserId);
+
+        assertEquals(1, recommendations.size());
+        assertEquals("Film 2", recommendations.iterator().next().getName());
+    }
+
+    @Test
+    void testGetRecommendationsEmptyWhenNoSimilarUsers() {
+        Collection<Film> recommendations = filmStorage.getRecommendations(testUserId);
+        assertTrue(recommendations.isEmpty());
+    }
+
+    @Test
+    void testGetRecommendationsEmptyWhenLikesAreIdentical() {
+        int userId2 = insertUser("test2@mail.com", "login2", "name2", "1990-01-01");
+
+        Film film1 = createFilm();
+        film1.setName("Film 1");
+        long filmId1 = filmStorage.createFilm(film1).getId();
+
+        Film film2 = createFilm();
+        film2.setName("Film 2");
+        long filmId2 = filmStorage.createFilm(film2).getId();
+
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, testUserId);
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId2, testUserId);
+
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, userId2);
+        jdbc.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId2, userId2);
+
+        Collection<Film> recommendations = filmStorage.getRecommendations(1);
+
+        assertTrue(recommendations.isEmpty());
     }
 
     private Film createFilm() {
@@ -211,5 +265,24 @@ class FilmDbStorageTest {
             genres.add(genre);
         }
         return genres;
+    }
+
+    private int insertUser(String email, String login, String name, String birthday) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbc.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO users (email, login, name, birthday) " +
+                            "VALUES (?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
+
+            ps.setString(1, email);
+            ps.setString(2, login);
+            ps.setString(3, name);
+            ps.setString(4, birthday);
+            return ps;
+        }, keyHolder);
+
+        return Objects.requireNonNull(keyHolder.getKey()).intValue();
     }
 }
