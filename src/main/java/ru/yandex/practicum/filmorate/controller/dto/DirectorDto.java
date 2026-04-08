@@ -5,9 +5,9 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@NotBlank
 @Accessors(chain = true)
 public class DirectorDto {
     private Long id;
+    @NotBlank(message = "Name must not be empty")
     private String name;
 }
