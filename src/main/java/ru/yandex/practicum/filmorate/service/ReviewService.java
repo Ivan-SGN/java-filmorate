@@ -58,7 +58,8 @@ public class ReviewService {
         Review existingReview = getReviewOrThrow(reviewDto.getReviewId().intValue());
         Review review = reviewMapper.map(reviewDto);
         review.setUseful(existingReview.getUseful());
-        validateUserAndFilm(review.getUserId(), review.getFilmId());
+        review.setUserId(existingReview.getUserId());
+        review.setFilmId(existingReview.getFilmId());
         Review updatedReview = reviewStorage.updateReview(review)
                 .orElseThrow(() -> new IllegalStateException("Review update failed"));
         feedStorage.addEvent(updatedReview.getUserId(), EventType.REVIEW, Operation.UPDATE, updatedReview.getReviewId());
