@@ -7,34 +7,31 @@ import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.Operation;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.Year;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class FilmService {
 
+    private static final Set<String> ALLOWED_PARAMS = Set.of("title", "director");
+    private static final Set<String> ALLOWED_SORT_PARAMS = Set.of("year", "likes");
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
     private final FilmMapper filmMapper;
     private final FeedStorage feedStorage;
+    private final DirectorStorage directorStorage;
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
@@ -42,6 +39,7 @@ public class FilmService {
             @Qualifier("feedDbStorage") FeedStorage feedStorage,
             @Qualifier("genreDbStorage") GenreStorage genreStorage,
             @Qualifier("mpaDbStorage") MpaStorage mpaStorage,
+            @Qualifier("directorDbStorage") DirectorStorage directorStorage,
             FilmMapper filmMapper
     ) {
         this.filmStorage = filmStorage;
@@ -50,6 +48,7 @@ public class FilmService {
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmMapper = filmMapper;
+        this.directorStorage = directorStorage;
     }
 
     public FilmRsDto addFilm(FilmRqDto filmRqDto) {
@@ -123,6 +122,42 @@ public class FilmService {
         log.info("Film {} deleted", filmId);
     }
 
+    public List<FilmRsDto> getFilmsByDirector(int directorId, String sortBy) {
+        log.info("Get films by director request, directorId={}, sortBy={}", directorId, sortBy);
+        getDirectorOrThrow(directorId);
+        String validatedSort = validateSortBy(sortBy);
+        return filmStorage.getFilmsByDirector(directorId, validatedSort).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
+    public List<FilmRsDto> searchFilms(String query, String by) {
+        if (query == null || query.isBlank()) {
+            throw new IllegalArgumentException("Query must not be empty");
+        }
+        log.info("Search films request, query={}, by={}", query, by);
+        Set<String> byParams = parseAndValidateByParams(by);
+        return filmStorage.searchFilms(query, byParams).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
+    private Set<String> parseAndValidateByParams(String by) {
+        if (by == null || by.isBlank()) {
+            throw new IllegalArgumentException("Parameter 'by' must not be empty");
+        }
+        Set<String> params = Arrays.stream(by.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+        if (params.isEmpty() || !ALLOWED_PARAMS.containsAll(params)) {
+            log.warn("Invalid 'by' params = {}", by);
+            throw new IllegalArgumentException("Parameter 'by' must be 'title', 'director' or both");
+        }
+        return params;
+    }
+
     private Film getFilmOrThrow(int id) {
         return filmStorage.getFilm(id)
                 .orElseThrow(() -> {
@@ -153,6 +188,7 @@ public class FilmService {
     private void resolveReferences(Film film) {
         film.setGenres(resolveGenres(film.getGenres()));
         film.setMpa(resolveMpa(film.getMpa()));
+        film.setDirectors(resolveDirectors(film.getDirectors()));
     }
 
     private Mpa resolveMpa(Mpa mpa) {
@@ -189,5 +225,55 @@ public class FilmService {
             log.warn("Genres not found: missingIds={}", missingGenreIds);
             throw new NotFoundException("Genres not found: " + missingGenreIds);
         }
+    }
+
+    private Set<Director> resolveDirectors(Collection<Director> directors) {
+        if (directors == null || directors.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        Set<Integer> ids = directors.stream()
+                .map(Director::getId)
+                .collect(Collectors.toSet());
+
+        Set<Director> found = directorStorage.getAllById(ids);
+
+        validateDirectors(found, ids);
+
+        return found;
+    }
+
+    private void validateDirectors(Set<Director> found, Set<Integer> requestedIds) {
+        Set<Integer> foundIds = found.stream()
+                .map(Director::getId)
+                .collect(Collectors.toSet());
+        Set<Integer> missing = new HashSet<>(requestedIds);
+        missing.removeAll(foundIds);
+
+        if (!missing.isEmpty()) {
+            log.warn("Directors not found: missingIds={}", missing);
+            throw new NotFoundException("Directors not found: " + missing);
+        }
+    }
+
+    private String validateSortBy(String sortBy) {
+        if (sortBy == null || sortBy.isBlank()) {
+            throw new IllegalArgumentException("Parameter 'sortBy' must not be empty");
+        }
+        String normalized = sortBy.toLowerCase();
+
+        if (!ALLOWED_SORT_PARAMS.contains(normalized)) {
+            log.warn("Invalid sortBy param = {}", sortBy);
+            throw new IllegalArgumentException("Parameter 'sortBy' must be 'year' or 'likes'");
+        }
+        return normalized;
+    }
+
+    private void getDirectorOrThrow(int id) {
+        directorStorage.getById(id)
+                .orElseThrow(() -> {
+                    log.warn("Director not found, id={}", id);
+                    return new NotFoundException("Director not found with id=" + id);
+                });
     }
 }

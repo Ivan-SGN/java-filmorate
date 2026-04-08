@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.Year;
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/films")
@@ -73,6 +74,22 @@ public class FilmController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFilm(@PathVariable @Positive int filmId) {
         filmService.deleteFilm(filmId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmRsDto> getByDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "likes") String sortBy
+    ) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public List<FilmRsDto> searchFilms(
+            @RequestParam String query,
+            @RequestParam String by) {
+
+        return filmService.searchFilms(query, by);
     }
 
     private void validateUpdateId(Long id, String entityName) {

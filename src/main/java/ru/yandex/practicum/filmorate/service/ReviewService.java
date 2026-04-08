@@ -6,13 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.controller.dto.ReviewDto;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.ReviewMapper;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -153,9 +153,9 @@ public class ReviewService {
 
     private void validateReactionForRemoval(int reviewId, int userId, boolean useful) {
         Boolean reaction = reviewStorage.getReaction(reviewId, userId).orElseThrow(() -> {
-                    log.warn("User {} is not creator of review {}", userId, reviewId);
-                    return new ValidationException("User has not added reaction to this review");
-                });
+            log.warn("User {} is not creator of review {}", userId, reviewId);
+            return new ValidationException("User has not added reaction to this review");
+        });
         if (reaction != useful) {
             String reactionName = useful ? "like" : "dislike";
             log.warn("User {} has not added {} to review {}", userId, reactionName, reviewId);

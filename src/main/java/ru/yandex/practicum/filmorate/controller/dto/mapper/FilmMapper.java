@@ -6,7 +6,8 @@ import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.model.Film;
 
-@Mapper(componentModel = "spring", uses = {MpaMapper.class, GenreMapper.class})
+@Mapper(componentModel = "spring",
+        uses = {MpaMapper.class, GenreMapper.class, DirectorMapper.class})
 public interface FilmMapper {
 
     FilmRsDto mapToRsDto(Film film);
