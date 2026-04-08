@@ -91,13 +91,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public Optional<Film> getFilm(int filmId) {
         Optional<Film> film = findOne(FIND_BY_ID, filmId);
-
         if (film.isPresent()) {
             Film f = film.get();
             enrichFilmsWithGenres(List.of(f));
             enrichFilmsWithDirectors(List.of(f));
         }
-
         return film;
     }
 
