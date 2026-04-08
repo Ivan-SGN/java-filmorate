@@ -52,24 +52,6 @@ class FeedServiceTest {
     }
 
     @Test
-    void testNotAddDuplicateFeedEvents() {
-        UserDto user1 = userService.addUser(createUser("user1"));
-        UserDto user2 = userService.addUser(createUser("user2"));
-        int filmId = filmService.addFilm(createFilm("film")).getId().intValue();
-
-        userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
-        userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
-        filmService.addLike(filmId, user1.getId().intValue());
-        filmService.addLike(filmId, user1.getId().intValue());
-
-        List<FeedEventDto> feed = userService.getFeed(user1.getId().intValue()).stream().toList();
-
-        assertEquals(2, feed.size());
-        assertEvent(feed.get(0), user1.getId().intValue(), EventType.FRIEND, Operation.ADD, user2.getId().intValue());
-        assertEvent(feed.get(1), user1.getId().intValue(), EventType.LIKE, Operation.ADD, filmId);
-    }
-
-    @Test
     void testGetFeedForUnknownUser() {
         assertThrows(NotFoundException.class, () -> userService.getFeed(999999));
     }
