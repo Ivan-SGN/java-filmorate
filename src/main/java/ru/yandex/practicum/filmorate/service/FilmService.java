@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class FilmService {
 
     private static final Set<String> ALLOWED_PARAMS = Set.of("title", "director");
+    private static final Set<String> ALLOWED_SORT_PARAMS = Set.of("year", "likes");
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final GenreStorage genreStorage;
@@ -31,7 +32,6 @@ public class FilmService {
     private final FilmMapper filmMapper;
     private final FeedStorage feedStorage;
     private final DirectorStorage directorStorage;
-    private static final Set<String> ALLOWED_SORT_PARAMS = Set.of("year", "likes");
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
