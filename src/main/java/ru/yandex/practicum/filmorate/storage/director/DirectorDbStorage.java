@@ -17,19 +17,17 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
     private static final String INSERT = "INSERT INTO directors(name) VALUES (?)";
     private static final String UPDATE = "UPDATE directors SET name = ? WHERE id = ?";
     private static final String DELETE = "DELETE FROM directors WHERE id = ?";
-
+    private static final String FIND_ALL_BY_IDS =
+            "SELECT * FROM directors WHERE id IN (:ids)";
     private static final String INSERT_FILM_DIRECTOR =
             "INSERT INTO film_directors(film_id, director_id) VALUES (?, ?)";
-
     private static final String DELETE_FILM_DIRECTORS =
             "DELETE FROM film_directors WHERE film_id = ?";
-
     private static final String FIND_BY_FILM_IDS =
             "SELECT fd.film_id, d.* " +
                     "FROM film_directors fd " +
                     "JOIN directors d ON d.id = fd.director_id " +
                     "WHERE fd.film_id IN (:ids)";
-
     private final NamedParameterJdbcTemplate namedJdbc;
 
     public DirectorDbStorage(JdbcTemplate jdbc, NamedParameterJdbcTemplate namedJdbc) {
@@ -94,11 +92,28 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public void saveDirectorsForFilm(int filmId, Collection<Director> directors) {
-        jdbc.update(DELETE_FILM_DIRECTORS, filmId);
         if (directors == null) return;
+        jdbc.update(DELETE_FILM_DIRECTORS, filmId);
         for (Director d : directors) {
             jdbc.update(INSERT_FILM_DIRECTOR, filmId, d.getId());
         }
+    }
+
+    @Override
+    public Set<Director> getAllById(Set<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptySet();
+        }
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("ids", ids);
+        Set<Director> result = new HashSet<>();
+        namedJdbc.query(FIND_ALL_BY_IDS, params, rs -> {
+            Director d = new Director();
+            d.setId(rs.getInt("id"));
+            d.setName(rs.getString("name"));
+            result.add(d);
+        });
+        return result;
     }
 
     @Override

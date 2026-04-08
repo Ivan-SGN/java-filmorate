@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -20,6 +21,7 @@ public class DirectorService {
     private final DirectorMapper directorMapper;
 
     public List<DirectorDto> getAll() {
+        log.info("Get all directors request");
         return directorStorage.getAll().stream()
                 .map(directorMapper::mapToDto)
                 .toList();
@@ -33,9 +35,7 @@ public class DirectorService {
 
     public DirectorDto create(DirectorDto dto) {
         Director director = directorStorage.create(directorMapper.map(dto));
-
         log.info("Director created: id={}", director.getId());
-
         return directorMapper.mapToDto(director);
     }
 
@@ -47,17 +47,17 @@ public class DirectorService {
         return directorMapper.mapToDto(updated);
     }
 
+    public void delete(long id) {
+        getDirectorOrThrow(id);
+        directorStorage.delete(id);
+        log.info("Director deleted: id={}", id);
+    }
+
     private Director getDirectorOrThrow(long id) {
         return directorStorage.getById(id)
                 .orElseThrow(() -> {
                     log.warn("Director not found: id={}", id);
                     return new NotFoundException("Director not found with id=" + id);
                 });
-    }
-
-    public void delete(long id) {
-        getDirectorOrThrow(id);
-        directorStorage.delete(id);
-        log.info("Director deleted: id={}", id);
     }
 }
