@@ -60,7 +60,7 @@ public class FilmController {
     public Collection<FilmRsDto> getPopular(
             @RequestParam(defaultValue = "10") @Positive int count,
             @RequestParam(required = false) @Positive Integer genreId,
-            @RequestParam(required = false) Year year
+            @RequestParam(required = false) @Positive Year year
     ) {
         return filmService.getPopular(count, genreId, year);
     }
