@@ -60,8 +60,11 @@ public class FilmController {
     public Collection<FilmRsDto> getPopular(
             @RequestParam(defaultValue = "10") @Positive int count,
             @RequestParam(required = false) @Positive Integer genreId,
-            @RequestParam(required = false) @Positive Year year
+            @RequestParam(required = false) Year year
     ) {
+        if (year != null) {
+            validateYear(year);
+        }
         return filmService.getPopular(count, genreId, year);
     }
 
@@ -95,6 +98,12 @@ public class FilmController {
     private void validateUpdateId(Long id, String entityName) {
         if (id == null || id <= 0) {
             throw new ValidationException(entityName + " id must be positive");
+        }
+    }
+
+    private void validateYear(Year year) {
+        if (year.getValue() <= 0) {
+            throw new ValidationException("Year must be positive");
         }
     }
 }
