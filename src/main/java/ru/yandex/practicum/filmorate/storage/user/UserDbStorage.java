@@ -21,13 +21,15 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     private static final String UPDATE = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
     private static final String ADD_FRIEND = "MERGE INTO friends (user_id, friend_id) KEY (user_id, friend_id) VALUES (?, ?)";
     private static final String REMOVE_FRIEND = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+    private static final String HAS_FRIEND = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
+    private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
     private static final String GET_FRIENDS =
             "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
     private static final String GET_COMMON_FRIENDS =
             "SELECT u.* FROM users u " +
-            "JOIN friends f1 ON u.id = f1.friend_id " +
-            "JOIN friends f2 ON u.id = f2.friend_id " +
-            "WHERE f1.user_id = ? AND f2.user_id = ?";
+                    "JOIN friends f1 ON u.id = f1.friend_id " +
+                    "JOIN friends f2 ON u.id = f2.friend_id " +
+                    "WHERE f1.user_id = ? AND f2.user_id = ?";
 
     public UserDbStorage(JdbcTemplate jdbc) {
         super(jdbc, new UserRowMapper());
@@ -77,6 +79,17 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     @Override
     public void removeFriend(int userId, int friendId) {
         jdbc.update(REMOVE_FRIEND, userId, friendId);
+    }
+
+    @Override
+    public boolean hasFriend(int userId, int friendId) {
+        Integer count = jdbc.queryForObject(HAS_FRIEND, Integer.class, userId, friendId);
+        return count > 0;
+    }
+
+    @Override
+    public void deleteUser(int userId) {
+        jdbc.update(DELETE_USER, userId);
     }
 
     @Override

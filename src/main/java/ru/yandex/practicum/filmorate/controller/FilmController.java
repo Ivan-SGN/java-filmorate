@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.controller.dto.FilmRqDto;
@@ -9,7 +10,9 @@ import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
+import java.time.Year;
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/films")
@@ -38,29 +41,69 @@ public class FilmController {
         return filmService.getAllFilms();
     }
 
-    @GetMapping("/{id}")
-    public FilmRsDto getFilm(@PathVariable @Positive int id) {
-        return filmService.getFilm(id);
+    @GetMapping("/{filmId}")
+    public FilmRsDto getFilm(@PathVariable @Positive int filmId) {
+        return filmService.getFilm(filmId);
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable @Positive int id, @PathVariable @Positive int userId) {
-        filmService.addLike(id, userId);
+    @PutMapping("/{filmId}/like/{userId}")
+    public void addLike(@PathVariable @Positive int filmId, @PathVariable int userId) {
+        filmService.addLike(filmId, userId);
     }
 
-    @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable @Positive int id, @PathVariable @Positive int userId) {
-        filmService.removeLike(id, userId);
+    @DeleteMapping("/{filmId}/like/{userId}")
+    public void removeLike(@PathVariable @Positive int filmId, @PathVariable int userId) {
+        filmService.removeLike(filmId, userId);
     }
 
     @GetMapping("/popular")
-    public Collection<FilmRsDto> getPopular(@RequestParam(defaultValue = "10") @Positive Integer count) {
-        return filmService.getPopular(count);
+    public Collection<FilmRsDto> getPopular(
+            @RequestParam(defaultValue = "10") @Positive int count,
+            @RequestParam(required = false) @Positive Integer genreId,
+            @RequestParam(required = false) Year year
+    ) {
+        if (year != null) {
+            validateYear(year);
+        }
+        return filmService.getPopular(count, genreId, year);
+    }
+
+    @GetMapping("/common")
+    public Collection<FilmRsDto> getCommon(@RequestParam int userId, @RequestParam @Positive int friendId) {
+        return filmService.getCommon(userId, friendId);
+    }
+
+    @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFilm(@PathVariable @Positive int filmId) {
+        filmService.deleteFilm(filmId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmRsDto> getByDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "likes") String sortBy
+    ) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public List<FilmRsDto> searchFilms(
+            @RequestParam String query,
+            @RequestParam String by) {
+
+        return filmService.searchFilms(query, by);
     }
 
     private void validateUpdateId(Long id, String entityName) {
         if (id == null || id <= 0) {
             throw new ValidationException(entityName + " id must be positive");
+        }
+    }
+
+    private void validateYear(Year year) {
+        if (year.getValue() <= 0) {
+            throw new ValidationException("Year must be positive");
         }
     }
 }

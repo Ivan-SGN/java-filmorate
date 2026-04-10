@@ -8,6 +8,8 @@ public interface GenreStorage {
 
     List<Genre> getAll();
 
+    Set<Genre> getAllById(Set<Integer> ids);
+
     Optional<Genre> getById(int id);
 
     Map<Integer, Set<Genre>> getGenresForFilms(List<Integer> id);

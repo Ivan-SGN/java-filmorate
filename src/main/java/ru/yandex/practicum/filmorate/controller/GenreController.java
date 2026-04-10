@@ -25,8 +25,8 @@ public class GenreController {
         return genreService.getAllGenres();
     }
 
-    @GetMapping("/{id}")
-    public GenreDto getGenre(@PathVariable @Positive int id) {
-        return genreService.getGenre(id);
+    @GetMapping("/{genreId}")
+    public GenreDto getGenre(@PathVariable @Positive int genreId) {
+        return genreService.getGenre(genreId);
     }
 }

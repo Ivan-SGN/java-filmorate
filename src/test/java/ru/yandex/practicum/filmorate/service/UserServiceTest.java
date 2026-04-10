@@ -1,34 +1,38 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
 @Transactional
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class UserServiceTest {
 
     private final UserService userService;
-
-    @Autowired
-    public UserServiceTest(UserService userService) {
-        this.userService = userService;
-    }
+    private final JdbcTemplate jdbcTemplate;
 
     @Test
     void testAddUser() {
         UserDto user = userService.addUser(createUser("login1"));
 
-        assertEquals(1L, user.getId());
+        assertNotNull(user.getId());
         assertEquals("login1", user.getLogin());
     }
 
@@ -59,6 +63,22 @@ class UserServiceTest {
         userService.addUser(createUser("login2"));
 
         assertEquals(2, userService.getAllUsers().size());
+    }
+
+    @Test
+    void testDeleteUser() {
+        UserDto user = userService.addUser(createUser("login1"));
+
+        userService.deleteUser(user.getId().intValue());
+
+        assertThrows(NotFoundException.class,
+                () -> userService.getUser(user.getId().intValue()));
+    }
+
+    @Test
+    void testDeleteNonExistingUser() {
+        assertThrows(NotFoundException.class,
+                () -> userService.deleteUser(999999));
     }
 
     @Test
@@ -109,6 +129,66 @@ class UserServiceTest {
         userService.addFriend(user1.getId().intValue(), user2.getId().intValue());
 
         assertEquals(1, userService.getFriends(user1.getId().intValue()).size());
+    }
+
+    @Test
+    void testGetRecommendationsReturnsDtoCollection() {
+        UserDto user1 = userService.addUser(createUser("user1"));
+        UserDto user2 = userService.addUser(createUser("user2"));
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS
+            );
+            ps.setString(1, "Rec Film");
+            ps.setString(2, "Description");
+            ps.setString(3, "2022-01-01");
+            ps.setInt(4, 90);
+            ps.setInt(5, 1);
+            return ps;
+        }, keyHolder);
+
+        int filmId1 = keyHolder.getKey().intValue();
+
+        KeyHolder keyHolder2 = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS
+            );
+            ps.setString(1, "Target Film");
+            ps.setString(2, "Description");
+            ps.setString(3, "2023-01-01");
+            ps.setInt(4, 95);
+            ps.setInt(5, 1);
+            return ps;
+        }, keyHolder2);
+
+        int film2Id = keyHolder2.getKey().intValue();
+
+        jdbcTemplate.update("INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
+                "Rec Film", "Description", "2022-01-01", 90, 1);
+        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, user1.getId());
+        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", filmId1, user2.getId());
+
+        jdbcTemplate.update("INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
+                "Target Film", "Description", "2023-01-01", 95, 1);
+        jdbcTemplate.update("INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)", film2Id, user2.getId());
+
+        var recommendations = userService.getRecommendations(user1.getId().intValue());
+
+        assertNotNull(recommendations);
+        assertFalse(recommendations.isEmpty());
+        assertEquals("Target Film", recommendations.iterator().next().getName());
+    }
+
+    @Test
+    void testGetRecommendationsForNonExistingUser() {
+        assertThrows(NotFoundException.class, () -> userService.getRecommendations(9999));
     }
 
     private UserDto createUser(String login) {

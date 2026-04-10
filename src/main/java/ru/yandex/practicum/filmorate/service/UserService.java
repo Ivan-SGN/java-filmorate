@@ -3,11 +3,19 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.controller.dto.FeedEventDto;
+import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
+import ru.yandex.practicum.filmorate.controller.dto.mapper.FeedEventMapper;
+import ru.yandex.practicum.filmorate.controller.dto.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.controller.dto.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
@@ -17,11 +25,26 @@ import java.util.Collection;
 public class UserService {
 
     private final UserStorage userStorage;
+    private final FeedStorage feedStorage;
+    private final FilmStorage filmStorage;
     private final UserMapper userMapper;
+    private final FilmMapper filmMapper;
+    private final FeedEventMapper feedEventMapper;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage, UserMapper userMapper) {
+    public UserService(
+            @Qualifier("userDbStorage") UserStorage userStorage,
+            @Qualifier("feedDbStorage") FeedStorage feedStorage,
+            @Qualifier("filmDbStorage") FilmStorage filmStorage,
+            UserMapper userMapper,
+            FilmMapper filmMapper,
+            FeedEventMapper feedEventMapper
+    ) {
         this.userStorage = userStorage;
+        this.feedStorage = feedStorage;
+        this.filmStorage = filmStorage;
         this.userMapper = userMapper;
+        this.filmMapper = filmMapper;
+        this.feedEventMapper = feedEventMapper;
     }
 
     public UserDto addUser(UserDto userDto) {
@@ -41,15 +64,21 @@ public class UserService {
     }
 
     public Collection<UserDto> getAllUsers() {
-        log.info("Get all users request");
+        log.info("Get all users");
         return userStorage.getAllUsers().stream()
                 .map(userMapper::mapToDto)
                 .toList();
     }
 
     public UserDto getUser(int id) {
-        log.info("Get user request, id: {}", id);
+        log.info("Get user, id: {}", id);
         return userMapper.mapToDto(getUserOrThrow(id));
+    }
+
+    public void deleteUser(int userId) {
+        getUserOrThrow(userId);
+        userStorage.deleteUser(userId);
+        log.info("Deleted user, id: {}", userId);
     }
 
     public void addFriend(int userId, int friendId) {
@@ -59,7 +88,11 @@ public class UserService {
         }
         getUserOrThrow(userId);
         getUserOrThrow(friendId);
+        boolean hasFriend = userStorage.hasFriend(userId, friendId);
         userStorage.addFriend(userId, friendId);
+        if (!hasFriend) {
+            feedStorage.addEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
+        }
         log.info("User {} added friend {}", userId, friendId);
     }
 
@@ -70,7 +103,11 @@ public class UserService {
         }
         getUserOrThrow(userId);
         getUserOrThrow(friendId);
+        boolean hasFriend = userStorage.hasFriend(userId, friendId);
         userStorage.removeFriend(userId, friendId);
+        if (hasFriend) {
+            feedStorage.addEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
+        }
         log.info("User {} removed friend {}", userId, friendId);
     }
 
@@ -92,6 +129,22 @@ public class UserService {
         log.info("Get common friends for users {} and {}", userId, otherId);
         return userStorage.getCommonFriends(userId, otherId).stream()
                 .map(userMapper::mapToDto)
+                .toList();
+    }
+
+    public Collection<FilmRsDto> getRecommendations(int userId) {
+        getUserOrThrow(userId);
+        log.info("Get recommendations request for user {}", userId);
+        return filmStorage.getRecommendations(userId).stream()
+                .map(filmMapper::mapToRsDto)
+                .toList();
+    }
+
+    public Collection<FeedEventDto> getFeed(int userId) {
+        getUserOrThrow(userId);
+        log.info("Get feed request for user {}", userId);
+        return feedStorage.getFeed(userId).stream()
+                .map(feedEventMapper::mapToDto)
                 .toList();
     }
 

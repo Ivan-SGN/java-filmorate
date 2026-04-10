@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.controller.dto.FeedEventDto;
+import ru.yandex.practicum.filmorate.controller.dto.FilmRsDto;
 import ru.yandex.practicum.filmorate.controller.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -37,29 +39,45 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable @Positive int id) {
-        return userService.getUser(id);
+    @GetMapping("/{userId}")
+    public UserDto getUser(@PathVariable int userId) {
+        return userService.getUser(userId);
     }
 
-    @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable @Positive int id, @PathVariable @Positive int friendId) {
-        userService.addFriend(id, friendId);
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable int userId) {
+        userService.deleteUser(userId);
     }
 
-    @DeleteMapping("/{id}/friends/{friendId}")
-    public void removeFriend(@PathVariable @Positive int id, @PathVariable @Positive int friendId) {
-        userService.removeFriend(id, friendId);
+    @PutMapping("/{userId}/friends/{friendId}")
+    public void addFriend(@PathVariable int userId, @PathVariable int friendId) {
+        userService.addFriend(userId, friendId);
     }
 
-    @GetMapping("/{id}/friends")
-    public Collection<UserDto> getFriends(@PathVariable @Positive int id) {
-        return userService.getFriends(id);
+    @DeleteMapping("/{userId}/friends/{friendId}")
+    public void removeFriend(@PathVariable int userId, @PathVariable int friendId) {
+        userService.removeFriend(userId, friendId);
     }
 
-    @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<UserDto> getCommonFriends(@PathVariable @Positive int id, @PathVariable @Positive int otherId) {
-        return userService.getCommonFriends(id, otherId);
+    @GetMapping("/{userId}/friends")
+    public Collection<UserDto> getFriends(@PathVariable int userId) {
+        return userService.getFriends(userId);
+    }
+
+    @GetMapping("/{userId}/friends/common/{otherId}")
+    public Collection<UserDto> getCommonFriends(@PathVariable int userId, @PathVariable int otherId) {
+        return userService.getCommonFriends(userId, otherId);
+    }
+
+    @GetMapping("/{userId}/recommendations")
+    public Collection<FilmRsDto> getRecommendations(@PathVariable int userId) {
+        return userService.getRecommendations(userId);
+    }
+
+    @GetMapping("/{userId}/feed")
+    public Collection<FeedEventDto> getFeed(@PathVariable int userId) {
+        return userService.getFeed(userId);
     }
 
     private void validateUpdateId(Long id, String entityName) {

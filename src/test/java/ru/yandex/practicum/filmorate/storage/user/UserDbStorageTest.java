@@ -1,4 +1,3 @@
-
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
@@ -8,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -15,7 +15,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @JdbcTest
 @AutoConfigureTestDatabase
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UserDbStorageTest {
 
     private final UserDbStorage userStorage;
+    private final JdbcTemplate jdbc;
     private User testUser;
 
     @BeforeEach
@@ -103,6 +105,28 @@ public class UserDbStorageTest {
         Collection<User> commonFriends = userStorage.getCommonFriends(testUser.getId(), user2.getId());
 
         assertEquals(1, commonFriends.size());
+    }
+
+    @Test
+    void testDeleteUser() {
+        int userId = testUser.getId();
+
+        userStorage.deleteUser(userId);
+
+        Optional<User> deleted = userStorage.getUser(userId);
+        assertTrue(deleted.isEmpty());
+    }
+
+    @Test
+    void testDeleteUserCascadeFriends() {
+        User friend = userStorage.createUser(createUser("login2"));
+
+        userStorage.addFriend(testUser.getId(), friend.getId());
+        userStorage.deleteUser(testUser.getId());
+
+        Collection<User> friendsOfFriend = userStorage.getFriends(friend.getId());
+
+        assertEquals(0, friendsOfFriend.size());
     }
 
     private User createUser(String login) {
